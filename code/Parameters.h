@@ -1,3 +1,26 @@
+byte arpnotes[10];
+unsigned long tempo;
+unsigned long lastTime;
+unsigned long blinkTime;
+unsigned long tick;
+unsigned long buttonOneHeldTime;
+unsigned long buttonTwoHeldTime;
+unsigned long buttonThreeHeldTime;
+unsigned long debounceTime;
+int playBeat;
+int notesHeld;
+int mode;
+int clockTick;
+boolean blinkOn;
+boolean hold;
+boolean buttonOneDown;
+boolean buttonTwoDown;
+boolean buttonThreeDown;
+boolean bypass;
+boolean midiThruOn;
+boolean arpUp;
+boolean clockSync;
+
 //Values below are just for initialising and will be changed when synth is initialised to current panel controls & EEPROM settings
 byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
 String patchName = INITPATCHNAME;
@@ -5,11 +28,12 @@ boolean encCW = true;//This is to set the encoder to increment when turned CW - 
 int modWheelDepth = 0;
 int pitchBendRange = 0;
 int keyMode = 0;
+bool arp = 0;
 
-float noiseLevel = 0;
-float noiseLevelstr = 0; // for display
-float glide = 0;
-float glidestr = 0; // for display
+int noiseLevel = 0;
+int noiseLevelstr = 0; // for display
+int glide = 0;
+int glidestr = 0; // for display
 
 int osc1_32 = 0;
 int osc1_32switch = 0;
@@ -128,54 +152,54 @@ int button16switch = 0;
 
 int returnvalue = 0;
 
-float LfoRate = 0;
-float LfoRatestr = 0; //for display
-float LfoWave = 0;
-float LfoWavestr = 0; //for display
-float pwLFO = 0;
-float pwLFOstr = 0; // for display
+int LfoRate = 0;
+int LfoRatestr = 0; //for display
+int LfoWave = 0;
+int LfoWavestr = 0; //for display
+int pwLFO = 0;
+int pwLFOstr = 0; // for display
 
-float osc2level = 0; // for display
-float osc2levelstr = 0;
-float osc1levelstr = 0; //for display
-float osc1level = 0;
+int osc2level = 0; // for display
+int osc2levelstr = 0;
+int osc1levelstr = 0; //for display
+int osc1level = 0;
 
-float osc1foot = 0;
-float osc2foot = 0;
+int osc1foot = 0;
+int osc2foot = 0;
 
-float osc1PW = 0;
-float osc1PWstr = 0;
-float osc2PW = 0;
-float osc2PWstr = 0;
-float osc2PWM = 0;
-float osc2PWMstr = 0;
-float osc1PWM = 0;
-float osc1PWMstr = 0;
+int osc1PW = 0;
+int osc1PWstr = 0;
+int osc2PW = 0;
+int osc2PWstr = 0;
+int osc2PWM = 0;
+int osc2PWMstr = 0;
+int osc1PWM = 0;
+int osc1PWMstr = 0;
 
-float ampAttack = 0;
-float ampAttackstr = 0;
-float ampDecay = 0;
-float ampDecaystr = 0;
-float ampSustain = 0;
-float ampSustainstr = 0;
-float ampRelease = 0;
-float ampReleasestr = 0;
+int ampAttack = 0;
+int ampAttackstr = 0;
+int ampDecay = 0;
+int ampDecaystr = 0;
+int ampSustain = 0;
+int ampSustainstr = 0;
+int ampRelease = 0;
+int ampReleasestr = 0;
 
-float osc2interval = 0;
-float osc2intervalstr = 0;
+int osc2interval = 0;
+int osc2intervalstr = 0;
 
-float filterAttack = 0;
-float filterAttackstr = 0;
-float filterDecay = 0;
-float filterDecaystr = 0;
-float filterSustain = 0;
-float filterSustainstr = 0;
-float filterRelease = 0;
-float filterReleasestr = 0;
+int filterAttack = 0;
+int filterAttackstr = 0;
+int filterDecay = 0;
+int filterDecaystr = 0;
+int filterSustain = 0;
+int filterSustainstr = 0;
+int filterRelease = 0;
+int filterReleasestr = 0;
 
-float filterRes = 0;
-float filterResstr = 0;
-float filterCutoff = 12000;
-float filterCutoffstr = 12000; // for display
-float filterLevel = 0;
-float filterLevelstr = 0;
+int filterRes = 0;
+int filterResstr = 0;
+int filterCutoff = 12000;
+int filterCutoffstr = 12000; // for display
+int filterLevel = 0;
+int filterLevelstr = 0;

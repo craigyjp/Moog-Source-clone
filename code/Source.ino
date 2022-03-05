@@ -1,5 +1,5 @@
 /*
-  Source MUX - Firmware Rev 1.3
+  Source MUX - Firmware Rev 1.7
 
   Includes code by:
     Dave Benn - Handling MUXs, a few other bits and original inspiration  https://www.notesandvolts.com/2019/01/teensy-synth-part-10-hardware.html
@@ -73,7 +73,7 @@ int8_t noteOrder[80] = {0}, orderIndx = {0};
 int noteMsg;
 unsigned long trigTimer = 0;
 #define NOTE_SF 51.57f // This value can be tuned if CV output isn't exactly 1V/octave
-#define trigTimeout 20
+#define trigTimeout 50
 int transpose = 0;
 int realoctave = 0;
 float previousMillis = millis(); //For MIDI Clk Sync
@@ -83,7 +83,6 @@ int modulation;
 int pitchbend;
 float bend = 0;
 int8_t d2, i;
-bool S1, S2;
 
 //
 //Shift Register setup
@@ -139,7 +138,7 @@ void setup()
   midi1.setHandlePitchChange(myPitchBend);
   midi1.setHandleProgramChange(myProgramChange);
   midi1.setHandleNoteOff(myNoteOff);
-  midi1.setHandleNoteOn(myNoteOn);
+  midi1.setHandleNoteOn(myNoteOnSwitch);
   Serial.println("USB HOST MIDI Class Compliant Listening");
 
   //USB Client MIDI
@@ -183,6 +182,23 @@ void setup()
 
 
   //  reinitialiseToPanel();
+
+  // Arpeggiator
+
+  blinkTime = lastTime = millis();
+  buttonOneHeldTime = buttonTwoHeldTime = buttonThreeHeldTime = 0;
+  notesHeld = 0;
+  playBeat = 0;
+  blinkOn = false;
+  hold = true;
+  arpUp = true; // used to determine which way arp is going when in updown mode
+  buttonOneDown = buttonTwoDown = buttonThreeDown = false;
+  mode = 0;
+  bypass = midiThruOn = false;
+  tempo = 400;
+  debounceTime = 50;
+  clockSync = false;
+  clockTick = 1;
 }
 
 void setVoltage(int dacpin, bool channel, bool gain, unsigned int mV)
@@ -307,7 +323,7 @@ void commandTopNote()
     commandNote(topNote);
   else // All notes are off, turn off gate
     digitalWrite(GATE_NOTE1, LOW);
-    gatepulse = 0;
+  gatepulse = 0;
 }
 
 void commandBottomNote()
@@ -325,7 +341,7 @@ void commandBottomNote()
     commandNote(bottomNote);
   else // All notes are off, turn off gate
     digitalWrite(GATE_NOTE1, LOW);
-    gatepulse = 0;
+  gatepulse = 0;
 }
 
 void commandLastNote()
@@ -342,14 +358,15 @@ void commandLastNote()
   gatepulse = 0;
 }
 
-void commandNote(int noteMsg) {
+void commandNote(int noteMsg)
+{
   unsigned int CV = (unsigned int) ((float) (noteMsg + transpose + realoctave) * NOTE_SF * 1.0 + 0.5);
 
   analogWrite(A21, CV);
 
   if ( gatepulse == 0 && single == 1 )
   {
-  digitalWrite(TRIG_NOTE1, HIGH);
+    digitalWrite(TRIG_NOTE1, HIGH);
   }
   if  ( multi == 1 )
   {
@@ -364,23 +381,20 @@ void commandNote(int noteMsg) {
   digitalWrite(TRIG_NOTE1, LOW);
 }
 
+void myNoteOnSwitch(byte channel, byte note, byte velocity)
+{
+  if (arp == 1)
+  {
+    myNoteOnArp(channel, note, velocity);
+  }
+  else
+  {
+    myNoteOn(channel, note, velocity);
+  }
+}
+
 void myNoteOn(byte channel, byte note, byte velocity)
 {
-  if (keyMode == 4)
-  {
-    S1 = 1;
-    S2 = 1;
-  }
-  if (keyMode == 5)
-  {
-    S1 = 0;
-    S2 = 1;
-  }
-  if (keyMode == 6)
-  {
-    S1 = 0;
-    S2 = 0;
-  }
   noteMsg = note;
 
   if (velocity == 0)  {
@@ -393,10 +407,10 @@ void myNoteOn(byte channel, byte note, byte velocity)
 
   analogWrite(A22, velCV);
 
-  if (S1 && S2) { // Highest note priority
+  if (keyMode == 4) { // Highest note priority
     commandTopNote();
   }
-  else if (!S1 && S2) { // Lowest note priority
+  else if (keyMode == 5) { // Lowest note priority
     commandBottomNote();
   }
   else { // Last note priority
@@ -408,22 +422,71 @@ void myNoteOn(byte channel, byte note, byte velocity)
   }
 }
 
-void myNoteOff(byte channel, byte note, byte velocity) {
-  if (keyMode == 4)
-  {
-    S1 = 1;
-    S2 = 1;
+void resetNotes() {
+  for (int i = 0; i < sizeof(arpnotes); i++)
+    arpnotes[i] = '\0';
+}
+
+void myNoteOnArp(byte channel, byte pitch, byte velocity)
+{
+
+  if (velocity == 0) // note released
+    notesHeld--;
+  else {
+    // If it's in hold mode and you are not holding any notes down,
+    // it continues to play the previous arpeggio. Once you press
+    // a new note, it resets the arpeggio and starts a new one.
+    if (notesHeld == 0 && hold)
+      resetNotes();
+
+    notesHeld++;
   }
-  if (keyMode == 5)
-  {
-    S1 = 0;
-    S2 = 1;
+
+
+  // Turn on an LED when any notes are held and off when all are released.
+  if (notesHeld > 0)
+    srpanel.set(43, HIGH); // stupid midi shield has high/low backwards for the LEDs
+  else
+    srpanel.set(43, LOW); // stupid midi shield has high/low backwards for the LEDs
+
+
+
+  // find the right place to insert the note in the notes array
+  for (int i = 0; i < sizeof(arpnotes); i++) {
+
+    if (velocity == 0) { // note released
+      if (!hold && arpnotes[i] >= pitch) {
+
+        // shift all notes in the array beyond or equal to the
+        // note in question, thereby removing it and keeping
+        // the array compact.
+        if (i < sizeof(arpnotes))
+          arpnotes[i] = arpnotes[i + 1];
+      }
+    }
+    else {
+
+      if (arpnotes[i] == pitch)
+        return;   // already in arpeggio
+      else if (arpnotes[i] != '\0' && arpnotes[i] < pitch)
+        continue; // ignore the notes below it
+      else {
+        // once we reach the first note in the arpeggio that's higher
+        // than the new one, scoot the rest of the arpeggio array over
+        // to the right
+        for (int j = sizeof(arpnotes); j > i; j--)
+          arpnotes[j] = arpnotes[j - 1];
+
+        // and insert the note
+        arpnotes[i] = pitch;
+        return;
+      }
+    }
   }
-  if (keyMode == 6)
-  {
-    S1 = 0;
-    S2 = 0;
-  }
+}
+
+void myNoteOff(byte channel, byte note, byte velocity)
+{
   noteMsg = note;
 
   if (velocity == 0)  {
@@ -436,10 +499,10 @@ void myNoteOff(byte channel, byte note, byte velocity) {
   // Pins NP_SEL1 and NP_SEL2 indictate note priority
   unsigned int velmV = ((unsigned int) ((float) velocity) * 1.25);
   setVoltage(DAC_NOTE1, 1, 1, velmV << 4 );
-  if (S1 && S2) { // Highest note priority
+  if (keyMode == 4) { // Highest note priority
     commandTopNote();
   }
-  else if (!S1 && S2) { // Lowest note priority
+  else if (keyMode == 5) { // Lowest note priority
     commandBottomNote();
   }
   else { // Last note priority
@@ -451,13 +514,14 @@ void myNoteOff(byte channel, byte note, byte velocity) {
   }
 }
 
-
-void allNotesOff() {
+void allNotesOff()
+{
   digitalWrite(GATE_NOTE1, LOW);
   gatepulse = 0;
 }
 
-void firstNoteOff() {
+void firstNoteOff()
+{
   digitalWrite(GATE_NOTE1, LOW);
   gatepulse = 0;
 }
@@ -714,7 +778,7 @@ void updateosc2_saw()
     srpanel.set(20, HIGH);
     srpanel.set(21, LOW);
     srpanel.set(22, LOW);
-    srp.set(5, LOW);
+    srp.set(5, LOW); // max 308 address lines
     srp.set(6, LOW);
   }
 }
@@ -727,7 +791,7 @@ void updateosc2_tri()
     srpanel.set(20, LOW);
     srpanel.set(21, HIGH);
     srpanel.set(22, LOW);
-    srp.set(5, HIGH);
+    srp.set(5, HIGH); // max 308 address lines
     srp.set(6, LOW);
   }
 }
@@ -740,7 +804,7 @@ void updateosc2_pulse()
     srpanel.set(20, LOW);
     srpanel.set(21, LOW);
     srpanel.set(22, HIGH);
-    srp.set(5, LOW);
+    srp.set(5, LOW); // max 308 address lines
     srp.set(6, HIGH);
   }
 }
@@ -836,6 +900,15 @@ void updatelevel2()
     updatevcaLoop();
     updatevcfLinear();
     updatevcaLinear();
+    updatearp();
+  }
+}
+
+void updatearp()
+{
+  if (arp == 1)
+  {
+    srpanel.set(40, HIGH);
   }
 }
 
@@ -866,7 +939,7 @@ void updateshvcf()
       srpanel.set(42, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(17, LOW);
     srpanel.set(42, LOW);
@@ -883,7 +956,7 @@ void updatevcfVelocity()
       srpanel.set(34, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(1, LOW);
     srpanel.set(34, LOW);
@@ -900,7 +973,7 @@ void updatevcaVelocity()
       srpanel.set(35, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(22, LOW);
     srpanel.set(35, LOW);
@@ -917,7 +990,7 @@ void updatevcfLoop()
       srpanel.set(36, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(18, LOW);
     srpanel.set(36, LOW);
@@ -934,7 +1007,7 @@ void updatevcaLoop()
       srpanel.set(37, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(19, LOW);
     srpanel.set(37, LOW);
@@ -951,7 +1024,7 @@ void updatevcfLinear()
       srpanel.set(38, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(20, LOW);
     srpanel.set(38, LOW);
@@ -968,11 +1041,19 @@ void updatevcaLinear()
       srpanel.set(39, HIGH);
     }
   }
-    else
+  else
   {
     srp.set(21, LOW);
     srpanel.set(39, LOW);
   }
+}
+
+void setPatchButton(int patchNo)
+{
+  state = PATCH;
+  recallPatch(patchNo);
+  showPatchNumberButton();
+  state = PARAMETER;
 }
 
 void updatebutton1()
@@ -993,10 +1074,8 @@ void updatebutton1()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "1");
     patchNo = 1;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1018,10 +1097,8 @@ void updatebutton2()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "2");
     patchNo = 2;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 
 }
@@ -1044,10 +1121,8 @@ void updatebutton3()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "3");
     patchNo = 3;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1069,10 +1144,8 @@ void updatebutton4()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "4");
     patchNo = 4;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1094,10 +1167,8 @@ void updatebutton5()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "5");
     patchNo = 5;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1119,10 +1190,8 @@ void updatebutton6()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "6");
     patchNo = 6;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1144,10 +1213,8 @@ void updatebutton7()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "7");
     patchNo = 7;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1169,25 +1236,29 @@ void updatebutton8()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "8");
     patchNo = 8;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
 void updatebutton9()
 {
-  if  (level2 == 1)
+  if  (level2 == 1 && button9switch == 1)
   {
-    showCurrentParameterPage("Level 2", "Arpeggio");
+    showCurrentParameterPage("Arpeggiator", "On");
+    arp = 1;
+    srpanel.set(40, HIGH);
+  }
+  if  (level2 == 1 && button9switch == 0)
+  {
+    showCurrentParameterPage("Arpeggiator", "Off");
+    arp = 0;
+    srpanel.set(40, LOW);
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "9");
     patchNo = 9;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1214,10 +1285,8 @@ void updatebutton10()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "10");
     patchNo = 10;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1244,10 +1313,8 @@ void updatebutton11()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "11");
     patchNo = 11;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1259,10 +1326,8 @@ void updatebutton12()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "12");
     patchNo = 12;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1274,40 +1339,48 @@ void updatebutton13()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "13");
     patchNo = 13;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
 void updatebutton14()
 {
-  if  (level2 == 1)
+  if  (level2 == 1 && button14switch == 1)
   {
-    showCurrentParameterPage("Level 2", "No Function");
+    showCurrentParameterPage("Arp Hold", "On");
+    hold = 1;
+    srpanel.set(45, HIGH);
+  }
+  if  (level2 == 1 && button14switch == 0)
+  {
+    showCurrentParameterPage("Arp Hold", "Off");
+    hold = 0;
+    srpanel.set(45, LOW);
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "14");
     patchNo = 14;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
 void updatebutton15()
 {
-  if  (level2 == 1)
+  if  (level2 == 1 && button15switch == 1)
   {
-    showCurrentParameterPage("Level 2", "No Function");
+    //showCurrentParameterPage("Arp Mode", "On");
+    playBeat = 0;
+    mode++;
+    if (mode == MODES) {
+      mode = 0;
+    }
+    arpUp = true;
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "15");
     patchNo = 15;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -1319,10 +1392,8 @@ void updatebutton16()
   }
   if (level1 == 1)
   {
-    showCurrentParameterPage("Recall Patch", "16");
     patchNo = 16;
-    recallPatch(patchNo);
-    showPatchNumberButton();
+    setPatchButton(patchNo);
   }
 }
 
@@ -2171,8 +2242,8 @@ void recallPatch(int patchNo)
 void setCurrentPatchData(String data[])
 {
   patchName = data[0];
-  noiseLevel = data[1].toFloat();
-  glide = data[2].toFloat();
+  noiseLevel = data[1].toInt();
+  glide = data[2].toInt();
   osc1_32 = data[3].toInt();
   osc1_16 = data[4].toInt();
   osc1_8 = data[5].toInt();
@@ -2198,28 +2269,28 @@ void setCurrentPatchData(String data[])
   kbOff  = data[25].toInt();
   kbHalf  = data[26].toInt();
   kbFull  = data[27].toInt();
-  LfoRate = data[28].toFloat();
-  pwLFO = data[29].toFloat();
-  osc1level = data[30].toFloat();
-  osc2level = data[31].toFloat();
-  osc1PW = data[32].toFloat();
-  osc2PW = data[33].toFloat();
-  osc1PWM = data[34].toFloat();
-  osc2PWM = data[35].toFloat();
-  ampAttack = data[36].toFloat();
-  ampDecay = data[37].toFloat();
-  ampSustain = data[38].toFloat();
-  ampRelease = data[39].toFloat();
-  osc2interval = data[40].toFloat();
-  filterAttack = data[41].toFloat();
-  filterDecay = data[42].toFloat();
-  filterSustain = data[43].toFloat();
-  filterRelease = data[44].toFloat();
-  filterRes = data[45].toFloat();
-  filterCutoff = data[46].toFloat();
-  filterLevel = data[47].toFloat();
-  osc1foot = data[48].toFloat();
-  osc2foot = data[49].toFloat();
+  LfoRate = data[28].toInt();
+  pwLFO = data[29].toInt();
+  osc1level = data[30].toInt();
+  osc2level = data[31].toInt();
+  osc1PW = data[32].toInt();
+  osc2PW = data[33].toInt();
+  osc1PWM = data[34].toInt();
+  osc2PWM = data[35].toInt();
+  ampAttack = data[36].toInt();
+  ampDecay = data[37].toInt();
+  ampSustain = data[38].toInt();
+  ampRelease = data[39].toInt();
+  osc2interval = data[40].toInt();
+  filterAttack = data[41].toInt();
+  filterDecay = data[42].toInt();
+  filterSustain = data[43].toInt();
+  filterRelease = data[44].toInt();
+  filterRes = data[45].toInt();
+  filterCutoff = data[46].toInt();
+  filterLevel = data[47].toInt();
+  osc1foot = data[48].toInt();
+  osc2foot = data[49].toInt();
   octave0 = data[50].toInt();
   octave1 = data[51].toInt();
   shvco = data[52].toInt();
@@ -2447,7 +2518,7 @@ void writeDemux()
       // 0-2V
       if (osc2interval < 9 )
       {
-      setVoltage(DAC_NOTE1, 0, 1, 0);
+        setVoltage(DAC_NOTE1, 0, 1, 0);
       }
       else
       {
@@ -3502,6 +3573,173 @@ void loop()
   mux.update();
   checkSwitches();
   checkEncoder();
+//  Serial.println(arp);
+  if ( arp == 1 )
+  {
+    cli();
+    tick = millis();
+    sei();
+
+    // if not in  clock synch mode, we just read the tempo from the
+    // tempo knob.
+    if (!clockSync) {
+      // There's no need to be precise about it here. This simple
+      // calculation is done quickly and gives a very wide range.
+
+      tempo = 25 * ((127 - LfoRate / 8) + 2);
+      handleTick(tick);
+    }
+  }
+}
+
+int velocity() {
+  int velocity = 127 - glide / 8;
+
+  // don't let it totally zero out.
+  if (velocity == 0)
+    velocity++;
+
+  return velocity;
+
+}
+
+void handleTick(unsigned long tick) {
+
+  // leave the LED long enough to be brightish but not so long
+  // that it ends up being solid instead of blinking
+  if (blinkOn && tick - blinkTime > 10) {
+    blinkOn = false;
+    srpanel.set(40, LOW); // stupid midi shield has high/low backwards for the LEDs
+  }
+  if (clockSync || tick - lastTime > tempo) {
+    blinkTime = lastTime = tick;
+    srpanel.set(40, HIGH); // stupid midi shield has high/low backwards for the LEDs
+    blinkOn = true;
+
+
+    if ((hold || notesHeld > 0) && arpnotes[0] != '\0') {
+
+
+      // stop the previous note
+      // MIDI.sendNoteOff(notes[playBeat],0,CHANNEL);
+
+      // fixes a bug where a random note would sometimes get played when switching chords
+      if (arpnotes[playBeat] == '\0')
+        playBeat = 0;
+
+      // play the current note
+      myNoteOn(CHANNEL, arpnotes[playBeat], velocity);
+
+      // decide what the next note is based on the mode.
+      if (mode == UP)
+        up();
+      else if (mode == DOWN)
+        down();
+      else if (mode == BOUNCE)
+        bounce();
+      else if (mode == UPDOWN)
+        upDown();
+      else if (mode == ONETHREE)
+        oneThree();
+      else if (mode == ONETHREEEVEN)
+        oneThreeEven();
+
+    }
+  }
+}
+
+
+void up() {
+  showCurrentParameterPage("Arp Mode", "Up");
+  playBeat++;
+  if (arpnotes[playBeat] == '\0')
+    playBeat = 0;
+}
+
+void down() {
+  showCurrentParameterPage("Arp Mode", "Down");
+  if (playBeat == 0) {
+    playBeat = sizeof(arpnotes) - 1;
+    while (arpnotes[playBeat] == '\0') {
+      playBeat--;
+    }
+  }
+  else
+    playBeat--;
+}
+
+void bounce() {
+  showCurrentParameterPage("Arp Mode", "Bounce");
+  if (sizeof(arpnotes) == 1)
+    playBeat = 0;
+  else if (arpUp) {
+    if (arpnotes[playBeat + 1] == '\0') {
+      arpUp = false;
+      playBeat--;
+    }
+    else
+      playBeat++;
+  }
+  else {
+    if (playBeat == 0) {
+      arpUp = true;
+      playBeat++;
+    }
+    else
+      playBeat--;
+  }
+}
+
+void upDown() {
+  showCurrentParameterPage("Arp Mode", "Up/Down");
+  if (sizeof(arpnotes) == 1)
+    playBeat = 0;
+  else if (arpUp) {
+    if (arpnotes[playBeat + 1] == '\0') {
+      arpUp = false;
+    }
+    else
+      playBeat++;
+  }
+  else {
+    if (playBeat == 0) {
+      arpUp = true;
+    }
+    else
+      playBeat--;
+  }
+}
+
+void oneThree() {
+  showCurrentParameterPage("Arp Mode", "One/Three");
+  if (arpUp)
+    playBeat += 2;
+  else
+    playBeat--;
+
+  arpUp = !arpUp;
+
+  if (arpnotes[playBeat] == '\0') {
+    playBeat = 0;
+    arpUp = true;
+  }
+}
+
+void oneThreeEven() {
+  showCurrentParameterPage("Arp Mode", "One/3/Even");
+
+  if (arpnotes[playBeat + 1] == '\0') {
+    playBeat = 0;
+    arpUp = true;
+    return;
+  }
+
+  if (arpUp)
+    playBeat += 2;
+  else
+    playBeat--;
+
+  arpUp = !arpUp;
 }
 
 int mod(int a, int b)
