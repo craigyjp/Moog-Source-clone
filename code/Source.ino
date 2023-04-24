@@ -172,8 +172,8 @@ void setup()
   encCW = getEncoderDir();
   level1 = 1;
   level2 = 0;
-  srpanel.set(28, HIGH);
-  srpanel.set(29, LOW);
+  srpanel.set(OSC2_32_LED, HIGH);
+  srpanel.set(OSC2_32_LED, LOW);
   patchNo = getLastPatch();
   recallPatch(patchNo); //Load first patch
   //showPatchNumberButton();
@@ -218,71 +218,71 @@ void setVoltage(int dacpin, bool channel, bool gain, unsigned int mV)
 
 void showPatchNumberButton()
 {
-  srpanel.set(32, LOW);
-  srpanel.set(33, LOW);
-  srpanel.set(34, LOW);
-  srpanel.set(35, LOW);
-  srpanel.set(36, LOW);
-  srpanel.set(37, LOW);
-  srpanel.set(38, LOW);
-  srpanel.set(39, LOW);
-  srpanel.set(40, LOW);
-  srpanel.set(41, LOW);
-  srpanel.set(42, LOW);
-  srpanel.set(43, LOW);
-  srpanel.set(44, LOW);
-  srpanel.set(45, LOW);
-  srpanel.set(46, LOW);
-  srpanel.set(47, LOW);
+  srpanel.set(BUTTON1_LED, LOW);
+  srpanel.set(BUTTON2_LED, LOW);
+  srpanel.set(BUTTON3_LED, LOW);
+  srpanel.set(BUTTON4_LED, LOW);
+  srpanel.set(BUTTON5_LED, LOW);
+  srpanel.set(BUTTON6_LED, LOW);
+  srpanel.set(BUTTON7_LED, LOW);
+  srpanel.set(BUTTON8_LED, LOW);
+  srpanel.set(BUTTON9_LED, LOW);
+  srpanel.set(BUTTON10_LED, LOW);
+  srpanel.set(BUTTON11_LED, LOW);
+  srpanel.set(BUTTON12_LED, LOW);
+  srpanel.set(BUTTON13_LED, LOW);
+  srpanel.set(BUTTON14_LED, LOW);
+  srpanel.set(BUTTON15_LED, LOW);
+  srpanel.set(BUTTON17_LED, LOW);
   switch (patchNo)
   {
     case 1:
-      srpanel.set(32, HIGH);
+      srpanel.set(BUTTON1_LED, HIGH);
       break;
     case 2:
-      srpanel.set(33, HIGH);
+      srpanel.set(BUTTON2_LED, HIGH);
       break;
     case 3:
-      srpanel.set(34, HIGH);
+      srpanel.set(BUTTON3_LED, HIGH);
       break;
     case 4:
-      srpanel.set(35, HIGH);
+      srpanel.set(BUTTON4_LED, HIGH);
       break;
     case 5:
-      srpanel.set(36, HIGH);
+      srpanel.set(BUTTON5_LED, HIGH);
       break;
     case 6:
-      srpanel.set(37, HIGH);
+      srpanel.set(BUTTON6_LED, HIGH);
       break;
     case 7:
-      srpanel.set(38, HIGH);
+      srpanel.set(BUTTON7_LED, HIGH);
       break;
     case 8:
-      srpanel.set(39, HIGH);
+      srpanel.set(BUTTON8_LED, HIGH);
       break;
     case 9:
-      srpanel.set(40, HIGH);
+      srpanel.set(BUTTON9_LED, HIGH);
       break;
     case 10:
-      srpanel.set(41, HIGH);
+      srpanel.set(BUTTON10_LED, HIGH);
       break;
     case 11:
-      srpanel.set(42, HIGH);
+      srpanel.set(BUTTON11_LED, HIGH);
       break;
     case 12:
-      srpanel.set(43, HIGH);
+      srpanel.set(BUTTON12_LED, HIGH);
       break;
     case 13:
-      srpanel.set(44, HIGH);
+      srpanel.set(BUTTON13_LED, HIGH);
       break;
     case 14:
-      srpanel.set(45, HIGH);
+      srpanel.set(BUTTON14_LED, HIGH);
       break;
     case 15:
-      srpanel.set(46, HIGH);
+      srpanel.set(BUTTON15_LED, HIGH);
       break;
     case 16:
-      srpanel.set(47, HIGH);
+      srpanel.set(BUTTON17_LED, HIGH);
       break;
   }
 }
@@ -445,9 +445,9 @@ void myNoteOnArp(byte channel, byte pitch, byte velocity)
 
   // Turn on an LED when any notes are held and off when all are released.
   if (notesHeld > 0)
-    srpanel.set(43, HIGH); // stupid midi shield has high/low backwards for the LEDs
+    srpanel.set(BUTTON12_LED, HIGH); // stupid midi shield has high/low backwards for the LEDs
   else
-    srpanel.set(43, LOW); // stupid midi shield has high/low backwards for the LEDs
+    srpanel.set(BUTTON12_LED, LOW); // stupid midi shield has high/low backwards for the LEDs
 
 
 
@@ -532,9 +532,9 @@ void updateosc1_32()
   {
     showCurrentParameterPage("Osc1 Footage", "32 Foot");
     osc1foot = 0;
-    srpanel.set(0, HIGH);  // LED on
-    srpanel.set(1, LOW);  // LED off
-    srpanel.set(2, LOW);  // LED off
+    srpanel.set(OSC1_32_LED, HIGH);  // LED on
+    srpanel.set(OSC1_16_LED, LOW);  // LED off
+    srpanel.set(OSC1_8_LED, LOW);  // LED off
   }
 }
 
@@ -544,9 +544,9 @@ void updateosc1_16()
   {
     showCurrentParameterPage("Osc1 Footage", "16 Foot");
     osc1foot = 2012;
-    srpanel.set(0, LOW);  // LED on
-    srpanel.set(1, HIGH);  // LED off
-    srpanel.set(2, LOW);  // LED off
+    srpanel.set(OSC1_32_LED, LOW);  // LED on
+    srpanel.set(OSC1_16_LED, HIGH);  // LED off
+    srpanel.set(OSC1_8_LED, LOW);  // LED off
   }
 }
 
@@ -556,9 +556,9 @@ void updateosc1_8()
   {
     showCurrentParameterPage("Osc1 Footage", "8 Foot");
     osc1foot = 4024;
-    srpanel.set(0, LOW);  // LED on
-    srpanel.set(1, LOW);  // LED off
-    srpanel.set(2, HIGH);  // LED off
+    srpanel.set(OSC1_32_LED, LOW);  // LED on
+    srpanel.set(OSC1_16_LED, LOW);  // LED off
+    srpanel.set(OSC1_8_LED, HIGH);  // LED off
   }
 }
 
@@ -567,11 +567,11 @@ void updateosc1_saw()
   if (osc1_saw == 1)
   {
     showCurrentParameterPage("Osc1 Wave", "Sawtooth");
-    srpanel.set(3, HIGH);
-    srpanel.set(4, LOW);
-    srpanel.set(5, LOW);
-    srp.set(3, LOW);
-    srp.set(4, LOW);
+    srpanel.set(OSC1_SAW_LED, HIGH);
+    srpanel.set(OSC1_TRI_LED, LOW);
+    srpanel.set(OSC1_TRI_PULSE, LOW);
+    srp.set(OSC1_WAVE1, LOW);
+    srp.set(OSC1_WAVE2, LOW);
   }
 }
 
@@ -580,11 +580,11 @@ void updateosc1_tri()
   if (osc1_tri == 1)
   {
     showCurrentParameterPage("Osc1 Wave", "Triangle");
-    srpanel.set(3, LOW);  // LED on
-    srpanel.set(4, HIGH);  // LED off
-    srpanel.set(5, LOW);  // LED off
-    srp.set(3, HIGH);
-    srp.set(4, LOW);
+    srpanel.set(OSC1_SAW_LED, LOW);  // LED on
+    srpanel.set(OSC1_TRI_LED, HIGH);  // LED off
+    srpanel.set(OSC1_TRI_PULSE, LOW);  // LED off
+    srp.set(OSC1_WAVE1, HIGH);
+    srp.set(OSC1_WAVE2, LOW);
   }
 }
 
@@ -593,11 +593,11 @@ void updateosc1_pulse()
   if (osc1_pulse == 1)
   {
     showCurrentParameterPage("Osc1 Wave", "Pulse");
-    srpanel.set(3, LOW);  // LED on
-    srpanel.set(4, LOW);  // LED off
-    srpanel.set(5, HIGH);  // LED off
-    srp.set(3, LOW);
-    srp.set(4, HIGH);
+    srpanel.set(OSC1_SAW_LED, LOW);  // LED on
+    srpanel.set(OSC1_TRI_LED, LOW);  // LED off
+    srpanel.set(OSC1_TRI_PULSE, HIGH);  // LED off
+    srp.set(OSC1_WAVE1, LOW);
+    srp.set(OSC1_WAVE2, HIGH);
   }
 }
 
@@ -606,8 +606,8 @@ void updatesingle()
   if (single == 1)
   {
     showCurrentParameterPage("Single Trigger", "On");
-    srpanel.set(8, HIGH);  // LED on
-    srpanel.set(9, LOW);  // LED off
+    srpanel.set(SINGLE_TRIG_LED, HIGH);  // LED on
+    srpanel.set(MULTIPLE_TRIG_LED, LOW);  // LED off
   }
 }
 
@@ -616,8 +616,8 @@ void updatemulti()
   if (multi == 1)
   {
     showCurrentParameterPage("Multi Trigger", "On");
-    srpanel.set(9, HIGH);  // LED on
-    srpanel.set(8, LOW);  // LED off
+    srpanel.set(MULTIPLE_TRIG_LED, HIGH);  // LED on
+    srpanel.set(SINGLE_TRIG_LED, LOW);  // LED off
   }
 }
 
@@ -627,8 +627,8 @@ void updatelfoTriangle()
   {
     showCurrentParameterPage("LFO Waveform", "Triangle");
     LfoWave = 400;
-    srpanel.set(10, HIGH);  // LED on
-    srpanel.set(11, LOW);  // LED off
+    srpanel.set(LFO_TRIANGLE_LED, HIGH);  // LED on
+    srpanel.set(LFO_SQUARE_LED, LOW);  // LED off
   }
 }
 
@@ -638,8 +638,8 @@ void updatelfoSquare()
   {
     showCurrentParameterPage("LFO Waveform", "Square");
     LfoWave = 300;
-    srpanel.set(10, LOW);  // LED on
-    srpanel.set(11, HIGH);  // LED off
+    srpanel.set(LFO_TRIANGLE_LED, LOW);
+    srpanel.set(LFO_SQUARE_LED, HIGH);
   }
 }
 
@@ -648,13 +648,13 @@ void updatesyncOff()
   if (syncOff == 1)
   {
     showCurrentParameterPage("Oscillator Sync", "Off");
-    srp.set(11, LOW); // pb osc1 on
-    srp.set(12, LOW); // pb osc2 on
-    srp.set(13, LOW); // sync off
-    srp.set(14, LOW); // soft sync off
-    srp.set(15, LOW); // hard sync off
-    srpanel.set(12, HIGH);
-    srpanel.set(13, LOW);
+    srp.set(PB_OSC1, LOW); // pb osc1 on
+    srp.set(PB_OSC2, LOW); // pb osc2 on
+    srp.set(SYNC, LOW); // sync off
+    srp.set(SOFT_SYNC, LOW); // soft sync off
+    srp.set(HARD_SYNC, LOW); // hard sync off
+    srpanel.set(SYNC_OFF_LED, HIGH);
+    srpanel.set(SYNC_ON_LED, LOW);
   }
 }
 
@@ -663,13 +663,13 @@ void updatesyncOn()
   if (syncOn == 1)
   {
     showCurrentParameterPage("Oscillator Sync", "On");
-    srp.set(11, LOW); // pb osc1 off
-    srp.set(12, HIGH);  // pb osc2 on
-    srp.set(13, HIGH); // sync on
-    srp.set(14, HIGH);  // soft sync on
-    srp.set(15, HIGH);  // hard sync off
-    srpanel.set(12, LOW);
-    srpanel.set(13, HIGH);
+    srp.set(PB_OSC1, LOW); // pb osc1 off
+    srp.set(PB_OSC2, HIGH);  // pb osc2 on
+    srp.set(SYNC, HIGH); // sync on
+    srp.set(SOFT_SYNC, HIGH);  // soft sync on
+    srp.set(HARD_SYNC, HIGH);  // hard sync off
+    srpanel.set(SYNC_OFF_LED, LOW);
+    srpanel.set(SYNC_ON_LED, HIGH);
   }
 }
 
@@ -678,9 +678,9 @@ void updateoctave0()
   if (octave0 == 1)
   {
     showCurrentParameterPage("KBD Octave", "0");
-    srp.set(2, LOW);  // LED on
-    srpanel.set(14, HIGH);
-    srpanel.set(15, LOW);
+    srp.set(OCTAVE, LOW);  // LED on
+    srpanel.set(OCTAVE_0_LED, HIGH);
+    srpanel.set(OCTAVE_1_LED, LOW);
   }
 }
 
@@ -689,9 +689,9 @@ void updateoctave1()
   if (octave1 == 1)
   {
     showCurrentParameterPage("KBD Octave", "+1");
-    srp.set(2, HIGH);  // LED on
-    srpanel.set(14, LOW);
-    srpanel.set(15, HIGH);
+    srp.set(OCTAVE, HIGH);  // LED on
+    srpanel.set(OCTAVE_0_LED, LOW);
+    srpanel.set(OCTAVE_1_LED, HIGH);
   }
 }
 
@@ -700,11 +700,11 @@ void updatekbOff()
   if (kbOff == 1)
   {
     showCurrentParameterPage("KBD Tracking", "Off");
-    srp.set(7, LOW);
-    srp.set(8, LOW);
-    srpanel.set(16, HIGH);
-    srpanel.set(17, LOW);
-    srpanel.set(18, LOW);
+    srp.set(KEYTRACK1, LOW);
+    srp.set(KEYTRACK2, LOW);
+    srpanel.set(KB_OFF_LED, HIGH);
+    srpanel.set(KB_HALF_LED, LOW);
+    srpanel.set(KB_FULL_LED, LOW);
   }
 }
 
@@ -713,11 +713,11 @@ void updatekbHalf()
   if (kbHalf == 1)
   {
     showCurrentParameterPage("KBD Tracking", "Half");
-    srp.set(7, LOW);
-    srp.set(8, HIGH);
-    srpanel.set(16, LOW);
-    srpanel.set(17, HIGH);
-    srpanel.set(18, LOW);
+    srp.set(KEYTRACK1, LOW);
+    srp.set(KEYTRACK2, HIGH);
+    srpanel.set(KB_OFF_LED, LOW);
+    srpanel.set(KB_HALF_LED, HIGH);
+    srpanel.set(KB_FULL_LED, LOW);
   }
 }
 
@@ -726,11 +726,11 @@ void updatekbFull()
   if (kbFull == 1)
   {
     showCurrentParameterPage("KBD Tracking", "Full");
-    srp.set(7, HIGH);
-    srp.set(8, HIGH);
-    srpanel.set(16, LOW);
-    srpanel.set(17, LOW);
-    srpanel.set(18, HIGH);
+    srp.set(KEYTRACK1, HIGH);
+    srp.set(KEYTRACK2, HIGH);
+    srpanel.set(KB_OFF_LED, LOW);
+    srpanel.set(KB_HALF_LED, LOW);
+    srpanel.set(KB_FULL_LED, HIGH);
   }
 }
 
@@ -740,9 +740,9 @@ void updateosc2_32()
   {
     showCurrentParameterPage("Osc2 Footage", "32 Foot");
     osc2foot = 0;
-    srpanel.set(26, HIGH);
-    srpanel.set(27, LOW);
-    srpanel.set(19, LOW);
+    srpanel.set(OSC2_32_LED, HIGH);
+    srpanel.set(OSC2_16_LED, LOW);
+    srpanel.set(OSC2_8_LED, LOW);
   }
 }
 
@@ -752,9 +752,9 @@ void updateosc2_16()
   {
     showCurrentParameterPage("Osc2 Footage", "16 Foot");
     osc2foot = 2024;
-    srpanel.set(26, LOW);
-    srpanel.set(27, HIGH);
-    srpanel.set(19, LOW);
+    srpanel.set(OSC2_32_LED, LOW);
+    srpanel.set(OSC2_16_LED, HIGH);
+    srpanel.set(OSC2_8_LED, LOW);
   }
 }
 
@@ -764,9 +764,9 @@ void updateosc2_8()
   {
     showCurrentParameterPage("Osc2 Footage", "8 Foot");
     osc2foot = 4048;
-    srpanel.set(26, LOW);
-    srpanel.set(27, LOW);
-    srpanel.set(19, HIGH);
+    srpanel.set(OSC2_32_LED, LOW);
+    srpanel.set(OSC2_16_LED, LOW);
+    srpanel.set(OSC2_8_LED, HIGH);
   }
 }
 
@@ -775,11 +775,11 @@ void updateosc2_saw()
   if (osc2_saw == 1)
   {
     showCurrentParameterPage("Osc2 Wave", "Sawtooth");
-    srpanel.set(20, HIGH);
-    srpanel.set(21, LOW);
-    srpanel.set(22, LOW);
-    srp.set(5, LOW); // max 308 address lines
-    srp.set(6, LOW);
+    srpanel.set(OSC2_SAW_LED, HIGH);
+    srpanel.set(OSC2_TRI_LED, LOW);
+    srpanel.set(OSC2_PULSE_LED, LOW);
+    srp.set(OSC2_WAVE1, LOW);
+    srp.set(OSC2_WAVE2, LOW);
   }
 }
 
@@ -788,11 +788,11 @@ void updateosc2_tri()
   if (osc2_tri == 1)
   {
     showCurrentParameterPage("Osc2 Wave", "Triangle");
-    srpanel.set(20, LOW);
-    srpanel.set(21, HIGH);
-    srpanel.set(22, LOW);
-    srp.set(5, HIGH); // max 308 address lines
-    srp.set(6, LOW);
+    srpanel.set(OSC2_SAW_LED, LOW);
+    srpanel.set(OSC2_TRI_LED, HIGH);
+    srpanel.set(OSC2_PULSE_LED, LOW);
+    srp.set(OSC2_WAVE1, HIGH);
+    srp.set(OSC2_WAVE2, LOW);
   }
 }
 
@@ -801,11 +801,11 @@ void updateosc2_pulse()
   if (osc2_pulse == 1)
   {
     showCurrentParameterPage("Osc2 Wave", "On");
-    srpanel.set(20, LOW);
-    srpanel.set(21, LOW);
-    srpanel.set(22, HIGH);
-    srp.set(5, LOW); // max 308 address lines
-    srp.set(6, HIGH);
+    srpanel.set(OSC2_SAW_LED, LOW);
+    srpanel.set(OSC2_TRI_LED, LOW);
+    srpanel.set(OSC2_PULSE_LED, HIGH);
+    srp.set(OSC2_WAVE1, LOW);
+    srp.set(OSC2_WAVE2, HIGH);
   }
 }
 
@@ -814,9 +814,9 @@ void updatelfoOscOff()
   if (lfoOscOff == 1)
   {
     showCurrentParameterPage("LFO to Osc", "Off");
-    srp.set(9, LOW);
-    srpanel.set(24, HIGH);
-    srpanel.set(25, LOW);
+    srp.set(LFO_TO_OSC, LOW);
+    srpanel.set(LFO_OSC_OFF_LED, HIGH);
+    srpanel.set(LFO_OSC_ON_LED, LOW);
   }
 }
 
@@ -825,9 +825,9 @@ void updatelfoOscOn()
   if (lfoOscOn == 1)
   {
     showCurrentParameterPage("LFO to Osc", "On");
-    srp.set(9, HIGH);
-    srpanel.set(24, LOW);
-    srpanel.set(25, HIGH);
+    srp.set(LFO_TO_OSC, HIGH);
+    srpanel.set(LFO_OSC_OFF_LED, LOW);
+    srpanel.set(LFO_OSC_ON_LED, HIGH);
   }
 }
 
@@ -836,9 +836,9 @@ void updatelfoVCFOff()
   if (lfoVCFOff == 1)
   {
     showCurrentParameterPage("LFO to VCF", "Off");
-    srp.set(10, LOW);
-    srpanel.set(30, HIGH);
-    srpanel.set(31, LOW);
+    srp.set(LFO_TO_OSC, LOW);
+    srpanel.set(LFO_VCF_OFF_LED, HIGH);
+    srpanel.set(LFO_VCF_ON_LED, LOW);
   }
 }
 
@@ -847,9 +847,9 @@ void updatelfoVCFOn()
   if (lfoVCFOn == 1)
   {
     showCurrentParameterPage("LFO to VCF", "On");
-    srp.set(10, HIGH);
-    srpanel.set(30, LOW);
-    srpanel.set(31, HIGH);
+    srp.set(LFO_TO_OSC, HIGH);
+    srpanel.set(LFO_VCF_OFF_LED, LOW);
+    srpanel.set(LFO_VCF_ON_LED, HIGH);
   }
 }
 
@@ -859,8 +859,8 @@ void updatelevel1()
     level2 = 0;
   {
     showCurrentParameterPage("Level 1", "Selected");
-    srpanel.set(28, HIGH);
-    srpanel.set(29, LOW);
+    srpanel.set(LEVEL1_LED, HIGH);
+    srpanel.set(LEVEL2_LED, LOW);
 
     showPatchNumberButton();
   }
@@ -871,25 +871,25 @@ void updatelevel2()
   if (level2 == 1)
   {
     showCurrentParameterPage("Level 2", "Selected");
-    srpanel.set(28, LOW);
-    srpanel.set(29, HIGH);
+    srpanel.set(LEVEL1_LED, LOW);
+    srpanel.set(LEVEL2_LED, HIGH);
 
-    srpanel.set(32, LOW);
-    srpanel.set(33, LOW);
-    srpanel.set(34, LOW);
-    srpanel.set(35, LOW);
-    srpanel.set(36, LOW);
-    srpanel.set(37, LOW);
-    srpanel.set(38, LOW);
-    srpanel.set(39, LOW);
-    srpanel.set(40, LOW);
-    srpanel.set(41, LOW);
-    srpanel.set(42, LOW);
-    srpanel.set(43, LOW);
-    srpanel.set(44, LOW);
-    srpanel.set(45, LOW);
-    srpanel.set(46, LOW);
-    srpanel.set(47, LOW);
+    srpanel.set(BUTTON1_LED, LOW);
+    srpanel.set(BUTTON2_LED, LOW);
+    srpanel.set(BUTTON3_LED, LOW);
+    srpanel.set(BUTTON4_LED, LOW);
+    srpanel.set(BUTTON5_LED, LOW);
+    srpanel.set(BUTTON6_LED, LOW);
+    srpanel.set(BUTTON7_LED, LOW);
+    srpanel.set(BUTTON8_LED, LOW);
+    srpanel.set(BUTTON9_LED, LOW);
+    srpanel.set(BUTTON10_LED, LOW);
+    srpanel.set(BUTTON11_LED, LOW);
+    srpanel.set(BUTTON12_LED, LOW);
+    srpanel.set(BUTTON13_LED, LOW);
+    srpanel.set(BUTTON14_LED, LOW);
+    srpanel.set(BUTTON15_LED, LOW);
+    srpanel.set(BUTTON17_LED, LOW);
     level1 = 0;
 
     updateshvco();
@@ -908,7 +908,7 @@ void updatearp()
 {
   if (arp == 1)
   {
-    srpanel.set(40, HIGH);
+    srpanel.set(BUTTON9_LED, HIGH);
   }
 }
 
@@ -916,16 +916,16 @@ void updateshvco()
 {
   if  (shvco  == 1)
   {
-    srp.set(16, HIGH);
+    srp.set(SH_TO_VCO, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(41, HIGH);
+      srpanel.set(BUTTON10_LED, HIGH);
     }
   }
   else
   {
-    srp.set(16, LOW);
-    srpanel.set(41, LOW);
+    srp.set(SH_TO_VCO, LOW);
+    srpanel.set(BUTTON10_LED, LOW);
   }
 }
 
@@ -933,16 +933,16 @@ void updateshvcf()
 {
   if  (shvcf  == 1)
   {
-    srp.set(17, HIGH);
+    srp.set(SH_TO_VCF, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(42, HIGH);
+      srpanel.set(BUTTON11_LED, HIGH);
     }
   }
   else
   {
-    srp.set(17, LOW);
-    srpanel.set(42, LOW);
+    srp.set(SH_TO_VCF, LOW);
+    srpanel.set(BUTTON11_LED, LOW);
   }
 }
 
@@ -950,16 +950,16 @@ void updatevcfVelocity()
 {
   if  (vcfVelocity  == 1)
   {
-    srp.set(1, HIGH);
+    srp.set(VCF_VELOCITY, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(34, HIGH);
+      srpanel.set(BUTTON3_LED, HIGH);
     }
   }
   else
   {
-    srp.set(1, LOW);
-    srpanel.set(34, LOW);
+    srp.set(VCF_VELOCITY, LOW);
+    srpanel.set(BUTTON3_LED, LOW);
   }
 }
 
@@ -967,16 +967,16 @@ void updatevcaVelocity()
 {
   if  (vcaVelocity  == 1)
   {
-    srp.set(22, HIGH);
+    srp.set(VCA_LOG_LIN, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(35, HIGH);
+      srpanel.set(BUTTON4_LED, HIGH);
     }
   }
   else
   {
-    srp.set(22, LOW);
-    srpanel.set(35, LOW);
+    srp.set(VCA_LOG_LIN, LOW);
+    srpanel.set(BUTTON4_LED, LOW);
   }
 }
 
@@ -984,16 +984,16 @@ void updatevcfLoop()
 {
   if  (vcfLoop  == 1)
   {
-    srp.set(18, HIGH);
+    srp.set(VCF_LOOP, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(36, HIGH);
+      srpanel.set(BUTTON5_LED, HIGH);
     }
   }
   else
   {
-    srp.set(18, LOW);
-    srpanel.set(36, LOW);
+    srp.set(VCF_LOOP, LOW);
+    srpanel.set(BUTTON5_LED, LOW);
   }
 }
 
@@ -1001,16 +1001,16 @@ void updatevcaLoop()
 {
   if  (vcaLoop  == 1)
   {
-    srp.set(19, HIGH);
+    srp.set(VCA_LOOP, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(37, HIGH);
+      srpanel.set(BUTTON6_LED, HIGH);
     }
   }
   else
   {
-    srp.set(19, LOW);
-    srpanel.set(37, LOW);
+    srp.set(VCA_LOOP, LOW);
+    srpanel.set(BUTTON6_LED, LOW);
   }
 }
 
@@ -1018,16 +1018,16 @@ void updatevcfLinear()
 {
   if  (vcfLinear  == 1)
   {
-    srp.set(20, HIGH);
+    srp.set(VCF_LOG_LIN, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(38, HIGH);
+      srpanel.set(BUTTON7_LED, HIGH);
     }
   }
   else
   {
-    srp.set(20, LOW);
-    srpanel.set(38, LOW);
+    srp.set(VCF_LOG_LIN, LOW);
+    srpanel.set(BUTTON7_LED, LOW);
   }
 }
 
@@ -1035,16 +1035,16 @@ void updatevcaLinear()
 {
   if  (vcaLinear  == 1)
   {
-    srp.set(21, HIGH);
+    srp.set(VCA_LOG_LIN, HIGH);
     if  (level2  == 1)
     {
-      srpanel.set(39, HIGH);
+      srpanel.set(BUTTON8_LED, HIGH);
     }
   }
   else
   {
-    srp.set(21, LOW);
-    srpanel.set(39, LOW);
+    srp.set(VCA_LOG_LIN, LOW);
+    srpanel.set(BUTTON8_LED, LOW);
   }
 }
 
@@ -1062,14 +1062,14 @@ void updatebutton1()
   {
     showCurrentParameterPage("Bend Depth", pitchBendRange);
 
-    srpanel.set(32, HIGH);
+    srpanel.set(BUTTON1_LED, HIGH);
 
   }
   if  (level2 == 1 && button1switch == 0)
   {
     showCurrentParameterPage("Bend Depth", "Not Selected");
 
-    srpanel.set(32, LOW);
+    srpanel.set(BUTTON1_LED, LOW);
 
   }
   if (level1 == 1)
@@ -1085,14 +1085,14 @@ void updatebutton2()
   {
     showCurrentParameterPage("Mod Depth", modWheelDepth);
 
-    srpanel.set(33, HIGH);
+    srpanel.set(BUTTON2_LED, HIGH);
 
   }
   if  (level2 == 1 && button2switch == 0)
   {
     showCurrentParameterPage("Mod Depth", "Not Selected");
 
-    srpanel.set(33, LOW);
+    srpanel.set(BUTTON2_LED, LOW);
 
   }
   if (level1 == 1)
@@ -1109,15 +1109,15 @@ void updatebutton3()
   {
     showCurrentParameterPage("VCF Vel", "On");
     vcfVelocity = 1;
-    srpanel.set(34, HIGH);
-    srp.set(1, HIGH);
+    srpanel.set(BUTTON3_LED, HIGH);
+    srp.set(VCF_VELOCITY, HIGH);
   }
   if  (level2 == 1 && button3switch == 0)
   {
     showCurrentParameterPage("VCF Vel", "Off ");
     vcfVelocity = 0;
-    srpanel.set(34, LOW);
-    srp.set(1, LOW);
+    srpanel.set(BUTTON3_LED, LOW);
+    srp.set(VCF_VELOCITY, LOW);
   }
   if (level1 == 1)
   {
@@ -1132,15 +1132,15 @@ void updatebutton4()
   {
     showCurrentParameterPage("VCA Vel", "On");
     vcaVelocity = 1;
-    srpanel.set(35, HIGH);
-    srp.set(22, HIGH);
+    srpanel.set(BUTTON4_LED, HIGH);
+    srp.set(VCA_LOG_LIN, HIGH);
   }
   if  (level2 == 1 && button4switch == 0)
   {
     showCurrentParameterPage("VCA Vel", "Off ");
     vcaVelocity = 0;
-    srpanel.set(35, LOW);
-    srp.set(22, LOW);
+    srpanel.set(BUTTON4_LED, LOW);
+    srp.set(VCA_LOG_LIN, LOW);
   }
   if (level1 == 1)
   {
@@ -1155,15 +1155,15 @@ void updatebutton5()
   {
     showCurrentParameterPage("VCF Loop", "On");
     vcfLoop = 1;
-    srpanel.set(36, HIGH);
-    srp.set(18, HIGH);
+    srpanel.set(BUTTON5_LED, HIGH);
+    srp.set(VCF_LOOP, HIGH);
   }
   if  (level2 == 1 && button5switch == 0)
   {
     showCurrentParameterPage("VCF Loop", "Off ");
     vcfLoop = 0;
-    srpanel.set(36, LOW);
-    srp.set(18, LOW);
+    srpanel.set(BUTTON5_LED, LOW);
+    srp.set(VCF_LOOP, LOW);
   }
   if (level1 == 1)
   {
@@ -1178,15 +1178,15 @@ void updatebutton6()
   {
     showCurrentParameterPage("VCA Loop", "On");
     vcaLoop = 1;
-    srpanel.set(37, HIGH);
-    srp.set(19, HIGH);
+    srpanel.set(BUTTON6_LED, HIGH);
+    srp.set(VCA_LOOP, HIGH);
   }
   if  (level2 == 1 && button6switch == 0)
   {
     showCurrentParameterPage("VCA Loop", "Off ");
     vcaLoop = 0;
-    srpanel.set(37, LOW);
-    srp.set(19, LOW);
+    srpanel.set(BUTTON6_LED, LOW);
+    srp.set(VCA_LOOP, LOW);
   }
   if (level1 == 1)
   {
@@ -1201,15 +1201,15 @@ void updatebutton7()
   {
     showCurrentParameterPage("VCF Lin EG", "On");
     vcfLinear = 1;
-    srpanel.set(38, HIGH);
-    srp.set(20, HIGH);
+    srpanel.set(BUTTON7_LED, HIGH);
+    srp.set(VCF_LOG_LIN, HIGH);
   }
   if  (level2 == 1 && button7switch == 0)
   {
     showCurrentParameterPage("VCF Lin EG", "Off ");
     vcfLinear = 0;
-    srpanel.set(38, LOW);
-    srp.set(20, LOW);
+    srpanel.set(BUTTON7_LED, LOW);
+    srp.set(VCF_LOG_LIN, LOW);
   }
   if (level1 == 1)
   {
@@ -1224,15 +1224,15 @@ void updatebutton8()
   {
     showCurrentParameterPage("VCA Lin EG", "On");
     vcaLinear = 1;
-    srpanel.set(39, HIGH);
-    srp.set(21, HIGH);
+    srpanel.set(BUTTON8_LED, HIGH);
+    srp.set(VCA_LOG_LIN, HIGH);
   }
   if  (level2 == 1 && button8switch == 0)
   {
     showCurrentParameterPage("VCA Lin EG", "Off ");
     vcaLinear = 0;
-    srpanel.set(39, LOW);
-    srp.set(21, LOW);
+    srpanel.set(BUTTON8_LED, LOW);
+    srp.set(VCA_LOG_LIN, LOW);
   }
   if (level1 == 1)
   {
@@ -1247,13 +1247,13 @@ void updatebutton9()
   {
     showCurrentParameterPage("Arpeggiator", "On");
     arp = 1;
-    srpanel.set(40, HIGH);
+    srpanel.set(BUTTON9_LED, HIGH);
   }
   if  (level2 == 1 && button9switch == 0)
   {
     showCurrentParameterPage("Arpeggiator", "Off");
     arp = 0;
-    srpanel.set(40, LOW);
+    srpanel.set(BUTTON9_LED, LOW);
   }
   if (level1 == 1)
   {
@@ -1269,19 +1269,19 @@ void updatebutton10()
     showCurrentParameterPage("Sample & Hold", "To VCO & VCF ");
     shvco = 1;
     shvcf = 0;
-    srpanel.set(41, HIGH);
-    srpanel.set(42, LOW);
-    srp.set(16, HIGH);
-    srp.set(17, HIGH);
+    srpanel.set(BUTTON10_LED, HIGH);
+    srpanel.set(BUTTON11_LED, LOW);
+    srp.set(SH_TO_VCO, HIGH);
+    srp.set(SH_TO_VCF, HIGH);
   }
   if  (level2 == 1 && button10switch == 0)
   {
     showCurrentParameterPage("Sample & Hold", "Off ");
     shvco = 0;
     shvcf = 0;
-    srpanel.set(41, LOW);
-    srp.set(16, LOW);
-    srp.set(17, LOW);
+    srpanel.set(BUTTON10_LED, LOW);
+    srp.set(SH_TO_VCO, LOW);
+    srp.set(SH_TO_VCF, LOW);
   }
   if (level1 == 1)
   {
@@ -1297,19 +1297,19 @@ void updatebutton11()
     showCurrentParameterPage("Sample & Hold", "To VCF ");
     shvco = 0;
     shvcf = 1;
-    srpanel.set(41, LOW);
-    srpanel.set(42, HIGH);
-    srp.set(16, LOW);
-    srp.set(17, HIGH);
+    srpanel.set(BUTTON10_LED, LOW);
+    srpanel.set(BUTTON11_LED, HIGH);
+    srp.set(SH_TO_VCO, LOW);
+    srp.set(SH_TO_VCF, HIGH);
   }
   if  (level2 == 1 && button11switch == 0)
   {
     showCurrentParameterPage("Sample & Hold", "Off ");
     shvco = 0;
     shvcf = 0;
-    srpanel.set(42, LOW);
-    srp.set(16, LOW);
-    srp.set(17, LOW);
+    srpanel.set(BUTTON11_LED, LOW);
+    srp.set(SH_TO_VCO, LOW);
+    srp.set(SH_TO_VCF, LOW);
   }
   if (level1 == 1)
   {
@@ -1350,13 +1350,13 @@ void updatebutton14()
   {
     showCurrentParameterPage("Arp Hold", "On");
     hold = 1;
-    srpanel.set(45, HIGH);
+    srpanel.set(BUTTON14_LED, HIGH);
   }
   if  (level2 == 1 && button14switch == 0)
   {
     showCurrentParameterPage("Arp Hold", "Off");
     hold = 0;
-    srpanel.set(45, LOW);
+    srpanel.set(BUTTON14_LED, LOW);
   }
   if (level1 == 1)
   {
@@ -3609,11 +3609,11 @@ void handleTick(unsigned long tick) {
   // that it ends up being solid instead of blinking
   if (blinkOn && tick - blinkTime > 10) {
     blinkOn = false;
-    srpanel.set(40, LOW); // stupid midi shield has high/low backwards for the LEDs
+    srpanel.set(BUTTON9_LED, LOW); // stupid midi shield has high/low backwards for the LEDs
   }
   if (clockSync || tick - lastTime > tempo) {
     blinkTime = lastTime = tick;
-    srpanel.set(40, HIGH); // stupid midi shield has high/low backwards for the LEDs
+    srpanel.set(BUTTON9_LED, HIGH); // stupid midi shield has high/low backwards for the LEDs
     blinkOn = true;
 
 

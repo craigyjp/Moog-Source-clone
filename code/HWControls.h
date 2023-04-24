@@ -71,6 +71,36 @@ ADC *adc = new ADC();
 #define SETTINGS_SW 12
 #define BACK_SW 10
 
+// Internal shift registers
+
+
+#define VCF_VELOCITY 1
+#define OSC1_WAVE1 3
+#define OSC1_WAVE2 4
+#define OSC2_WAVE1 5
+#define OSC2_WAVE2 6
+#define KEYTRACK1 7
+
+#define KEYTRACK2 8
+#define LFO_TO_OSC 9
+#define LFO_TO_VCF 10
+#define PB_OSC1 11
+#define PB_OSC2 12
+#define SYNC 13
+#define SOFT_SYNC 14
+#define HARD_SYNC 15
+
+#define SH_TO_VCO 16
+#define SH_TO_VCF 17
+#define VCF_LOOP 18
+#define VCA_LOOP 19
+#define VCF_LOG_LIN 20
+#define VCA_LOG_LIN 21
+#define VCA_VELOCITY 22
+
+
+// front panel Buttons
+
 #define OSC1_32 0
 #define OSC1_16 1
 #define OSC1_8 2
@@ -121,6 +151,59 @@ ADC *adc = new ADC();
 #define BUTTON14 45
 #define BUTTON15 46
 #define BUTTON16 47
+
+// LEDs 
+
+#define OSC1_32_LED 0
+#define OSC1_16_LED 1
+#define OSC1_8_LED 2
+#define OSC1_SAW_LED 3
+#define OSC1_TRI_LED 4
+#define OSC1_PULSE_LED 5
+
+#define SINGLE_TRIG_LED 8
+#define MULTIPLE_TRIG_LED 9
+#define LFO_TRIANGLE_LED 10
+#define LFO_SQUARE_LED 11
+#define SYNC_OFF_LED 12
+#define SYNC_ON_LED 13
+#define OCTAVE_0_LED 14
+#define OCTAVE_1_LED 15
+
+#define KB_OFF_LED 16
+#define KB_HALF_LED 17
+#define KB_FULL_LED 18
+#define OSC2_8_LED 19
+#define OSC2_SAW_LED 20
+#define OSC2_TRI_LED 21
+#define OSC2_PULSE_LED 22
+
+#define LFO_OSC_OFF_LED 24
+#define LFO_OSC_ON_LED 25
+#define OSC2_32_LED 26
+#define OSC2_16_LED 27
+#define LEVEL1_LED 28
+#define LEVEL2_LED 29
+#define LFO_VCF_OFF_LED 30
+#define LFO_VCF_ON_LED 31
+
+#define BUTTON1_LED 32
+#define BUTTON2_LED 33
+#define BUTTON3_LED 34
+#define BUTTON4_LED 35
+#define BUTTON5_LED 36
+#define BUTTON6_LED 37
+#define BUTTON7_LED 38
+#define BUTTON8_LED 39
+
+#define BUTTON9_LED 40
+#define BUTTON10_LED 41
+#define BUTTON11_LED 42
+#define BUTTON12_LED 43
+#define BUTTON13_LED 44
+#define BUTTON14_LED 45
+#define BUTTON15_LED 46
+#define BUTTON16_LED 47
 
 #define ENCODER_PINA 4
 #define ENCODER_PINB 5
