@@ -8,3 +8,5 @@ LFO's, VCF and VCA env gens are all Electric Druid chips
 VCAs are AS3364 quad VCA chips for the levels etc.
 Buttons are PB86-B1 in back from AliExpress
 PSU is a MeanWell RQ50-C quad PSU with +/-15 and +/- 5V supplies.
+
+![Synth](photos/synth.jpg)
