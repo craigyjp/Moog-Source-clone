@@ -1,8 +1,8 @@
 #include "TeensyThreads.h"
 
 // This Teensy3 native optimized version requires specific pins
-#define sclk 20 // SCLK can also use pin 14
-#define mosi 21 // MOSI can also use pin 7
+//#define sclk 20 // SCLK can also use pin 14
+//#define mosi 21 // MOSI can also use pin 7
 #define cs 2    // CS & DC can use pins 2, 6, 9, 10, 15, 20, 21, 22, 23
 #define dc 3    //but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
 #define rst 8   // RST can use any pin
@@ -24,7 +24,7 @@
 #define FILTER_ENV 3
 #define AMP_ENV 4
 
-ST7735_t3 tft = ST7735_t3(cs, dc, mosi, sclk, rst);
+ST7735_t3 tft = ST7735_t3(cs, dc, 21, 20, rst);
 
 String currentParameter = "";
 String currentValue = "";
@@ -32,8 +32,8 @@ float currentFloatValue = 0.0;
 String currentPgmNum = "";
 String currentPatchName = "";
 String newPatchName = "";
-char * currentSettingsOption = "";
-char * currentSettingsValue = "";
+const char * currentSettingsOption = "";
+const char * currentSettingsValue = "";
 int currentSettingsPart = SETTINGS;
 int paramType = PARAMETER;
 
@@ -384,8 +384,7 @@ void showPatchPage(String number, String patchName)
   currentPatchName = patchName;
 }
 
-void showSettingsPage(char *  option, char * value, int settingsPart)
-{
+void showSettingsPage(const char *  option, const char * value, int settingsPart) {
   currentSettingsOption = option;
   currentSettingsValue = value;
   currentSettingsPart = settingsPart;

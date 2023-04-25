@@ -3,6 +3,7 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
 #include <Bounce.h>
+#include "TButton.h"
 #include <ADC.h>
 #include <ADC_util.h>
 
@@ -73,8 +74,8 @@ ADC *adc = new ADC();
 
 // Internal shift registers
 
-
 #define VCF_VELOCITY 1
+#define OCTAVE 2
 #define OSC1_WAVE1 3
 #define OSC1_WAVE2 4
 #define OSC2_WAVE1 5
@@ -277,8 +278,7 @@ Bounce recallButton = Bounce(RECALL_SW, DEBOUNCE); //On encoder
 boolean recall = true; //Hack for recall button
 Bounce saveButton = Bounce(SAVE_SW, DEBOUNCE);
 boolean del = true; //Hack for save button
-Bounce settingsButton = Bounce(SETTINGS_SW, DEBOUNCE);
-boolean reini = true; //Hack for settings button
+TButton settingsButton{SETTINGS_SW, LOW, HOLD_DURATION, DEBOUNCE, CLICK_DURATION};
 Bounce backButton = Bounce(BACK_SW, DEBOUNCE);
 boolean panic = true; //Hack for back button
 Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder

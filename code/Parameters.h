@@ -1,26 +1,3 @@
-byte arpnotes[10];
-unsigned long tempo;
-unsigned long lastTime;
-unsigned long blinkTime;
-unsigned long tick;
-unsigned long buttonOneHeldTime;
-unsigned long buttonTwoHeldTime;
-unsigned long buttonThreeHeldTime;
-unsigned long debounceTime;
-int playBeat;
-int notesHeld;
-int mode;
-int clockTick;
-boolean blinkOn;
-boolean hold;
-boolean buttonOneDown;
-boolean buttonTwoDown;
-boolean buttonThreeDown;
-boolean bypass;
-boolean midiThruOn;
-boolean arpUp;
-boolean clockSync;
-
 //Values below are just for initialising and will be changed when synth is initialised to current panel controls & EEPROM settings
 byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
 String patchName = INITPATCHNAME;

@@ -49,5 +49,6 @@ const float PULSEWIDTH[128] = {50, 50, 50, 51, 51, 52, 52, 53, 53, 53, 54, 54, 5
 #define NO_OF_PARAMS 70
 const char* INITPATCHNAME = "Initial Patch";
 #define HOLD_DURATION 1000
+const uint32_t CLICK_DURATION = 250;
 #define PATCHES_LIMIT 999
 const String INITPATCH = "Solina,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,";
