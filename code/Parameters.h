@@ -5,7 +5,8 @@ boolean encCW = true;//This is to set the encoder to increment when turned CW - 
 int modWheelDepth = 0;
 int pitchBendRange = 0;
 int keyMode = 0;
-bool arp = 0;
+static unsigned long clock_timer = 0, clock_timeout = 0;
+static unsigned int clock_count = 0;
 
 int noiseLevel = 0;
 int noiseLevelstr = 0; // for display
@@ -130,11 +131,11 @@ int button16switch = 0;
 int returnvalue = 0;
 
 int LfoRate = 0;
-int LfoRatestr = 0; //for display
+float LfoRatestr = 0; //for display
 int LfoWave = 0;
 int LfoWavestr = 0; //for display
 int pwLFO = 0;
-int pwLFOstr = 0; // for display
+float pwLFOstr = 0; // for display
 
 int osc2level = 0; // for display
 int osc2levelstr = 0;
@@ -177,6 +178,6 @@ int filterReleasestr = 0;
 int filterRes = 0;
 int filterResstr = 0;
 int filterCutoff = 12000;
-int filterCutoffstr = 12000; // for display
+float filterCutoffstr = 12000; // for display
 int filterLevel = 0;
 int filterLevelstr = 0;

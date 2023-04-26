@@ -92,11 +92,6 @@ void renderCurrentPatchPage()
   }
 
 //  tft.drawRect(115, 28, 12, 12, ST7735_BLUE);
-//  tft.drawRect(130, 28, 12, 12, ST7735_BLUE);
-//  tft.drawRect(145, 28, 12, 12, ST7735_BLUE);
-//  tft.drawRect(115, 43, 12, 12, ST7735_BLUE);
-//  tft.drawRect(130, 43, 12, 12, ST7735_BLUE);
-//  tft.drawRect(145, 43, 12, 12, ST7735_BLUE);
 
 
 //  if (voiceOn[0])
@@ -105,35 +100,7 @@ void renderCurrentPatchPage()
 //    tft.setCursor(120, 36);
 //    tft.println("1");
 //  }
-//  if (voiceOn[1])
-//  {
-//    tft.fillRect(130, 28, 12, 12, ST7735_BLUE);
-//    tft.setCursor(133, 36);
-//    tft.println("2");
-//  }
-//  if (voiceOn[2])
-//  {
-//    tft.fillRect(145, 28, 12, 12, ST7735_BLUE);
-//    tft.setCursor(148, 36);
-//    tft.println("3");
-//  }
-//  if (voiceOn[3])
-//  {
-//    tft.fillRect(115, 43, 12, 12, ST7735_BLUE);
-//    tft.setCursor(118, 51);
-//    tft.println("4");
-//  }
-//  if (voiceOn[4])
-//  {
-//    tft.fillRect(130, 43, 12, 12, ST7735_BLUE);
-//    tft.setCursor(133, 51);
-//    tft.println("5");
-//  }
-//  if (voiceOn[5])
-//  {
-//    tft.fillRect(145, 43, 12, 12, ST7735_BLUE);
-//    tft.setCursor(148, 51);
-//    tft.println("6");
+
 //  }
 
   tft.drawFastHLine(10, 62, tft.width() - 20, ST7735_RED);
@@ -171,10 +138,6 @@ void renderEnv(float att, float dec, float sus, float rel)
   tft.drawLine(100 + (att * 60), 74.0, 100 + ((att + dec) * 60), 94 - (sus / 52), ST7735_CYAN);
   tft.drawFastHLine(100 + ((att + dec) * 60), 94 - (sus / 52), 40 - ((att + dec) * 60), ST7735_CYAN);
   tft.drawLine(139, 94 - (sus / 52), 139 + (rel * 60), 94, ST7735_CYAN);
-//  tft.drawLine(100, 94, 100 + (att * 15), 74, ST7735_CYAN);
-//  tft.drawLine(100 + (att * 15), 74.0, 100 + ((att + dec) * 15), 94 - (sus / 52), ST7735_CYAN);
-//  tft.drawFastHLine(100 + ((att + dec) * 15 ), 94 - (sus / 52), 40 - ((att + dec) * 15), ST7735_CYAN);
-//  tft.drawLine(139, 94 - (sus / 52), 139 + (rel * 15), 94, ST7735_CYAN);
 }
 
 void renderCurrentParameterPage()
@@ -200,9 +163,9 @@ void renderCurrentParameterPage()
         case VAR_TRI:
           renderVarTriangle(currentFloatValue);
           break;
-//        case FILTER_ENV:
-//          renderEnv(filterAttack * 0.0001, filterDecay * 0.0001, filterSustain, filterRelease * 0.0001);
-//          break;
+       case FILTER_ENV:
+         renderEnv(filterAttack * 0.0001, filterDecay * 0.0001, filterSustain, filterRelease * 0.0001);
+         break;
         case AMP_ENV:
           renderEnv(ampAttack * 0.0001, ampDecay * 0.0001, ampSustain, ampRelease * 0.0001);
           break;

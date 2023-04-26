@@ -90,7 +90,6 @@ int8_t d2, i;
 // data, clk, latch
 //
 ShiftRegister74HC595<6> srpanel(6, 7, 9);
-//ShiftRegister74HC595<3> srp(36, 39, 37);
 
 // pins for 74HC595
 #define BOARD_DATA 36   // pin 14 on 74HC595 (DATA)
@@ -154,6 +153,10 @@ void setup() {
   usbMIDI.setHandleProgramChange(myProgramChange);
   usbMIDI.setHandleNoteOff(myNoteOff);
   usbMIDI.setHandleNoteOn(myNoteOn);
+  usbMIDI.setHandleClock(myMIDIclock);
+  usbMIDI.setHandleStart(myMIDIClockStart);
+  usbMIDI.setHandleStop(myMIDIClockStop);
+
   Serial.println("USB Client MIDI Listening");
 
   //MIDI 5 Pin DIN
@@ -163,6 +166,9 @@ void setup() {
   MIDI.setHandleProgramChange(myProgramChange);
   MIDI.setHandleNoteOn(myNoteOn);
   MIDI.setHandleNoteOff(myNoteOff);
+  MIDI.setHandleClock(myMIDIclock);
+  MIDI.setHandleStart(myMIDIClockStart);
+  MIDI.setHandleStop(myMIDIClockStop);
 
   Serial.println("MIDI In DIN Listening");
 
@@ -181,17 +187,14 @@ void setup() {
   level2 = 0;
   srpanel.set(OSC2_32_LED, HIGH);
   srpanel.set(OSC2_32_LED, LOW);
-  patchNo = getLastPatch();
-  recallPatch(patchNo);  //Load first patch
-  //showPatchNumberButton();
 
   mux.begin(PIN_DATA, PIN_LOAD, PIN_CLK);
   mux.setCallback(onButtonPress);
 
-  //mux.begin(PIN_DATA, PIN_LOAD, PIN_CLK);
   boardswitch.begin(BOARD_DATA, BOARD_LATCH, BOARD_CLK, BOARD_PWM);
 
-  //  reinitialiseToPanel();
+  patchNo = getLastPatch();
+  recallPatch(patchNo);  //Load first patch
 }
 
 void setVoltage(int dacpin, bool channel, bool gain, unsigned int mV) {
@@ -275,6 +278,39 @@ void showPatchNumberButton() {
       srpanel.set(BUTTON16_LED, HIGH);
       break;
   }
+}
+
+void myMIDIclock() {
+
+  if (millis() > clock_timeout + 300) clock_count = 0;  // Prevents Clock from starting in between quarter notes after clock is restarted!
+  clock_timeout = millis();
+
+  if (clock_count == 0) {
+    digitalWrite(CLOCK, HIGH);  // Start clock pulse
+    clock_timer = millis();
+  }
+  clock_count++;
+
+  if (clock_count == 24) {  // MIDI timing clock sends 24 pulses per quarter note.  Sent pulse only once every 24 pulses
+    clock_count = 0;
+  }
+
+}
+
+void myMIDIClockStart() {
+  MIDIClkSignal = true;
+}
+
+void myMIDIClockStop() {
+  MIDIClkSignal = false;
+}
+
+
+void stopClockPulse() {
+      if ((clock_timer > 0) && (millis() - clock_timer > 20)) {
+    digitalWrite(CLOCK, LOW); // Set clock pulse low after 20 msec
+    clock_timer = 0;
+      }
 }
 
 void myPitchBend(byte channel, int bend) {
@@ -1130,7 +1166,7 @@ void updateLfoRate() {
 }
 
 void updatepwLFO() {
-  showCurrentParameterPage("PWM Rate", int(pwLFOstr));
+  showCurrentParameterPage("PWM Rate", String(pwLFOstr) + " Hz");
 }
 
 void updateosc2level() {
@@ -1790,14 +1826,14 @@ void myControlChange(byte channel, byte control, int value) {
       break;
 
     case CCLfoRate:
-      LfoRatestr = LFOTEMPOINV[value / 8];  // for display
+      LfoRatestr = LFOTEMPO[value / 8];  // for display
       LfoRate = value;
       updateLfoRate();
       break;
 
     case CCpwLFO:
       pwLFO = value;
-      pwLFOstr = value / 8;  // for display
+      pwLFOstr = LFOTEMPO[value / 8];  // for display
       updatepwLFO();
       break;
 
@@ -1927,8 +1963,8 @@ void setCurrentPatchData(String data[]) {
   kbOff = data[25].toInt();
   kbHalf = data[26].toInt();
   kbFull = data[27].toInt();
-  LfoRate = data[28].toInt();
-  pwLFO = data[29].toInt();
+  LfoRate = data[28].toFloat();
+  pwLFO = data[29].toFloat();
   osc1level = data[30].toInt();
   osc2level = data[31].toInt();
   osc1PW = data[32].toInt();
@@ -1945,7 +1981,7 @@ void setCurrentPatchData(String data[]) {
   filterSustain = data[43].toInt();
   filterRelease = data[44].toInt();
   filterRes = data[45].toInt();
-  filterCutoff = data[46].toInt();
+  filterCutoff = data[46].toFloat();
   filterLevel = data[47].toInt();
   osc1foot = data[48].toInt();
   osc2foot = data[49].toInt();
@@ -2354,7 +2390,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button2switch = !button2switch;
     myControlChange(midiChannel, CCbutton2, button2switch);
   }
-  
+
   if (btnIndex == BUTTON3 && btnType == ROX_PRESSED) {
     button3switch = !button3switch;
     myControlChange(midiChannel, CCbutton3, button3switch);
@@ -2364,7 +2400,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button4switch = !button4switch;
     myControlChange(midiChannel, CCbutton4, button4switch);
   }
-  
+
   if (btnIndex == BUTTON5 && btnType == ROX_PRESSED) {
     button5switch = !button5switch;
     myControlChange(midiChannel, CCbutton5, button5switch);
@@ -2374,7 +2410,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button6switch = !button6switch;
     myControlChange(midiChannel, CCbutton6, button6switch);
   }
-  
+
   if (btnIndex == BUTTON7 && btnType == ROX_PRESSED) {
     button7switch = !button7switch;
     myControlChange(midiChannel, CCbutton7, button7switch);
@@ -2384,7 +2420,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button8switch = !button8switch;
     myControlChange(midiChannel, CCbutton8, button8switch);
   }
-  
+
   if (btnIndex == BUTTON9 && btnType == ROX_PRESSED) {
     button9switch = !button9switch;
     myControlChange(midiChannel, CCbutton9, button9switch);
@@ -2394,7 +2430,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button10switch = !button10switch;
     myControlChange(midiChannel, CCbutton10, button10switch);
   }
-  
+
   if (btnIndex == BUTTON11 && btnType == ROX_PRESSED) {
     button11switch = !button11switch;
     myControlChange(midiChannel, CCbutton11, button11switch);
@@ -2404,7 +2440,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button12switch = !button12switch;
     myControlChange(midiChannel, CCbutton12, button12switch);
   }
-  
+
   if (btnIndex == BUTTON13 && btnType == ROX_PRESSED) {
     button13switch = !button13switch;
     myControlChange(midiChannel, CCbutton13, button13switch);
@@ -2414,7 +2450,7 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
     button14switch = !button14switch;
     myControlChange(midiChannel, CCbutton14, button14switch);
   }
-  
+
   if (btnIndex == BUTTON15 && btnType == ROX_PRESSED) {
     button15switch = !button15switch;
     myControlChange(midiChannel, CCbutton15, button15switch);
@@ -2708,6 +2744,7 @@ void loop() {
   mux.update();
   checkSwitches();
   checkEncoder();
+  stopClockPulse();
 }
 
 
