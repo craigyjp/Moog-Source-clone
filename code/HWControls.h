@@ -308,8 +308,10 @@ void setupHardware()
 
   pinMode(GATE_NOTE1, OUTPUT);
   pinMode(TRIG_NOTE1, OUTPUT);
+  pinMode(CLOCK, OUTPUT);
   digitalWrite(GATE_NOTE1, LOW);
   digitalWrite(TRIG_NOTE1, LOW);
+  digitalWrite(CLOCK, LOW);
 
   pinMode(MUX_0, OUTPUT);
   pinMode(MUX_1, OUTPUT);

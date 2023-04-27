@@ -7,6 +7,8 @@ int pitchBendRange = 0;
 int keyMode = 0;
 static unsigned long clock_timer = 0, clock_timeout = 0;
 static unsigned int clock_count = 0;
+int clocksource = 0;
+int oldclocksource = 0;
 
 int noiseLevel = 0;
 int noiseLevelstr = 0; // for display

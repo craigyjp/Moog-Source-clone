@@ -13,7 +13,7 @@
 
 #pragma once
 
-#define SETTINGSOPTIONSNO 5//No of options
+#define SETTINGSOPTIONSNO 6//No of options
 #define SETTINGSVALUESNO 18//Maximum number of settings option values needed
 
 namespace settings {

@@ -6,6 +6,7 @@
 #define EEPROM_MODWHEEL_DEPTH 3
 #define EEPROM_ENCODER_DIR 4
 #define EEPROM_LAST_PATCH 5
+#define EEPROM_CLOCK_SOURCE 6
 
 int getMIDIChannel() {
   byte midiChannel = EEPROM.read(EEPROM_MIDI_CH);
@@ -20,7 +21,7 @@ void storeMidiChannel(byte channel)
 
 int getPitchBendRange() {
   byte pitchbend = EEPROM.read(EEPROM_PITCHBEND);
-  if (pitchbend < 1 || pitchbend > 12) return pitchBendRange; //If EEPROM has no pitchbend stored
+  if (pitchbend < 0 || pitchbend > 12) return pitchBendRange; //If EEPROM has no pitchbend stored
   return pitchbend;
 }
 
@@ -31,7 +32,7 @@ void storePitchBendRange(byte pitchbend)
 
 int getModWheelDepth() {
   byte mw = EEPROM.read(EEPROM_MODWHEEL_DEPTH);
-  if (mw < 1 || mw > 12) return modWheelDepth; //If EEPROM has no mod wheel depth stored
+  if (mw < 0 || mw > 10) return modWheelDepth; //If EEPROM has no mod wheel depth stored
   return mw;
 }
 
@@ -63,6 +64,18 @@ float getKeyMode() {
 void storeKeyMode(float keyMode)
 {
   EEPROM.update(EEPROM_KEY_MODE, keyMode);
+}
+
+int getClockSource() {
+  byte cs = EEPROM.read(EEPROM_CLOCK_SOURCE);
+  if (cs < 0 || cs > 1) return clocksource; //If EEPROM has no mod wheel depth stored
+  return cs;
+}
+
+void storeClockSource(byte clocksource)
+{
+  byte cs =  clocksource;
+  EEPROM.update(EEPROM_CLOCK_SOURCE, cs);
 }
 
 int getLastPatch() {

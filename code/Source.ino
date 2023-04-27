@@ -181,6 +181,9 @@ void setup() {
   //Read Mod Wheel Depth from EEPROM, this can be set individually by each patch.
   modWheelDepth = getModWheelDepth();
 
+
+
+
   //Read Encoder Direction from EEPROM
   encCW = getEncoderDir();
   level1 = 1;
@@ -192,6 +195,18 @@ void setup() {
   mux.setCallback(onButtonPress);
 
   boardswitch.begin(BOARD_DATA, BOARD_LATCH, BOARD_CLK, BOARD_PWM);
+
+  clocksource = getClockSource();
+  oldclocksource = clocksource;
+  switch (clocksource) {
+    case 0:
+      boardswitch.writePin(CLOCK_SOURCE, LOW);
+      break;
+
+    case 1:
+      boardswitch.writePin(CLOCK_SOURCE, HIGH);
+      break;
+  }
 
   patchNo = getLastPatch();
   recallPatch(patchNo);  //Load first patch
@@ -286,6 +301,7 @@ void myMIDIclock() {
   clock_timeout = millis();
 
   if (clock_count == 0) {
+    //Serial.println("Starting pulse");
     digitalWrite(CLOCK, HIGH);  // Start clock pulse
     clock_timer = millis();
   }
@@ -306,6 +322,7 @@ void myMIDIClockStop() {
 
 
 void stopClockPulse() {
+  //Serial.println("Stopping pulse");
   if ((clock_timer > 0) && (millis() - clock_timer > 20)) {
     digitalWrite(CLOCK, LOW);  // Set clock pulse low after 20 msec
     clock_timer = 0;
@@ -428,11 +445,11 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 void myNoteOff(byte channel, byte note, byte velocity) {
   noteMsg = note;
 
-  if (velocity == 0) {
-    notes[noteMsg] = false;
-  } else {
-    notes[noteMsg] = true;
-  }
+  //if (velocity == 0) {
+  notes[noteMsg] = false;
+  //} else {
+  //  notes[noteMsg] = true;
+  //}
 
   // Pins NP_SEL1 and NP_SEL2 indictate note priority
   unsigned int velmV = ((unsigned int)((float)velocity) * 1.25);
@@ -929,14 +946,14 @@ void updatebutton2() {
 }
 
 void turnOffOneandTwo() {
-    if (button1switch) {
-      srpanel.set(BUTTON1_LED, LOW);
-      button1switch = 0;
-    }
-    if (button2switch) {
-      srpanel.set(BUTTON2_LED, LOW);
-      button2switch = 0;
-    }
+  if (button1switch) {
+    srpanel.set(BUTTON1_LED, LOW);
+    button1switch = 0;
+  }
+  if (button2switch) {
+    srpanel.set(BUTTON2_LED, LOW);
+    button2switch = 0;
+  }
 }
 
 void updatebutton3() {
@@ -1297,7 +1314,7 @@ void myControlChange(byte channel, byte control, int value) {
 
   switch (control) {
 
-      case CCvolume:
+    case CCvolume:
       volume = value;
       volumestr = value / 8;
       updatevolume();
@@ -2507,6 +2524,23 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
   }
 }
 
+void checkEEProm() {
+
+  if (oldclocksource != clocksource) {
+
+    switch (clocksource) {
+      case 0:
+        boardswitch.writePin(CLOCK_SOURCE, LOW);
+        break;
+
+      case 1:
+        boardswitch.writePin(CLOCK_SOURCE, HIGH);
+        break;
+    }
+    oldclocksource = clocksource;
+  }
+}
+
 void checkSwitches() {
 
   saveButton.update();
@@ -2790,6 +2824,7 @@ void loop() {
   checkSwitches();
   checkEncoder();
   stopClockPulse();
+  checkEEProm();
 }
 
 
