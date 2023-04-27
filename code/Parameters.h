@@ -13,6 +13,9 @@ int noiseLevelstr = 0; // for display
 int glide = 0;
 int glidestr = 0; // for display
 
+int volume = 0;
+int volumestr = 0; // for display
+
 int osc1_32 = 0;
 int osc1_32switch = 0;
 int osc1_16 = 0;

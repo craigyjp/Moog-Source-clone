@@ -42,7 +42,7 @@ ADC *adc = new ADC();
 #define MUX1_OSC1PW 6
 #define MUX1_OSC1PWM 7
 #define MUX1_NOISE 8
-#define MUX1_9 9
+#define MUX1_VOLUME 9
 #define MUX1_10 10
 #define MUX1_11 11
 #define MUX1_12 12
@@ -75,6 +75,7 @@ ADC *adc = new ADC();
 
 // Internal shift registers
 
+#define CLOCK_SOURCE 0
 #define VCF_VELOCITY 1
 #define OCTAVE 2
 #define OSC1_WAVE1 3

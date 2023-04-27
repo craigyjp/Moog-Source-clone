@@ -294,7 +294,6 @@ void myMIDIclock() {
   if (clock_count == 24) {  // MIDI timing clock sends 24 pulses per quarter note.  Sent pulse only once every 24 pulses
     clock_count = 0;
   }
-
 }
 
 void myMIDIClockStart() {
@@ -307,10 +306,10 @@ void myMIDIClockStop() {
 
 
 void stopClockPulse() {
-      if ((clock_timer > 0) && (millis() - clock_timer > 20)) {
-    digitalWrite(CLOCK, LOW); // Set clock pulse low after 20 msec
+  if ((clock_timer > 0) && (millis() - clock_timer > 20)) {
+    digitalWrite(CLOCK, LOW);  // Set clock pulse low after 20 msec
     clock_timer = 0;
-      }
+  }
 }
 
 void myPitchBend(byte channel, int bend) {
@@ -886,14 +885,19 @@ void setPatchButton(int patchNo) {
 
 void updatebutton1() {
   if (level2 == 1 && button1switch == 1) {
-    showCurrentParameterPage("Bend Depth", pitchBendRange);
-
     srpanel.set(BUTTON1_LED, HIGH);
+    srpanel.set(BUTTON2_LED, LOW);
+    button2switch = 0;
+    state = SETTINGS;
+    settings::reset_settings();
+    settings::increment_setting();
+    settings::increment_setting();
+    settings::increment_setting();
+    showSettingsPage();
   }
   if (level2 == 1 && button1switch == 0) {
-    showCurrentParameterPage("Bend Depth", "Not Selected");
-
     srpanel.set(BUTTON1_LED, LOW);
+    state = PARAMETER;
   }
   if (level1 == 1) {
     patchNo = 1;
@@ -903,14 +907,20 @@ void updatebutton1() {
 
 void updatebutton2() {
   if (level2 == 1 && button2switch == 1) {
-    showCurrentParameterPage("Mod Depth", modWheelDepth);
-
     srpanel.set(BUTTON2_LED, HIGH);
+    srpanel.set(BUTTON1_LED, LOW);
+    button1switch = 0;
+    state = SETTINGS;
+    settings::reset_settings();
+    settings::increment_setting();
+    settings::increment_setting();
+    settings::increment_setting();
+    settings::increment_setting();
+    showSettingsPage();
   }
   if (level2 == 1 && button2switch == 0) {
-    showCurrentParameterPage("Mod Depth", "Not Selected");
-
     srpanel.set(BUTTON2_LED, LOW);
+    state = PARAMETER;
   }
   if (level1 == 1) {
     patchNo = 2;
@@ -918,17 +928,30 @@ void updatebutton2() {
   }
 }
 
+void turnOffOneandTwo() {
+    if (button1switch) {
+      srpanel.set(BUTTON1_LED, LOW);
+      button1switch = 0;
+    }
+    if (button2switch) {
+      srpanel.set(BUTTON2_LED, LOW);
+      button2switch = 0;
+    }
+}
+
 void updatebutton3() {
   if (level2 == 1 && button3switch == 1) {
     showCurrentParameterPage("VCF Vel", "On");
     vcfVelocity = 1;
     srpanel.set(BUTTON3_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_VELOCITY, HIGH);
   }
   if (level2 == 1 && button3switch == 0) {
     showCurrentParameterPage("VCF Vel", "Off ");
     vcfVelocity = 0;
     srpanel.set(BUTTON3_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_VELOCITY, LOW);
   }
   if (level1 == 1) {
@@ -942,12 +965,14 @@ void updatebutton4() {
     showCurrentParameterPage("VCA Vel", "On");
     vcaVelocity = 1;
     srpanel.set(BUTTON4_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, HIGH);
   }
   if (level2 == 1 && button4switch == 0) {
     showCurrentParameterPage("VCA Vel", "Off ");
     vcaVelocity = 0;
     srpanel.set(BUTTON4_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, LOW);
   }
   if (level1 == 1) {
@@ -961,12 +986,14 @@ void updatebutton5() {
     showCurrentParameterPage("VCF Loop", "On");
     vcfLoop = 1;
     srpanel.set(BUTTON5_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_LOOP, HIGH);
   }
   if (level2 == 1 && button5switch == 0) {
     showCurrentParameterPage("VCF Loop", "Off ");
     vcfLoop = 0;
     srpanel.set(BUTTON5_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_LOOP, LOW);
   }
   if (level1 == 1) {
@@ -980,12 +1007,14 @@ void updatebutton6() {
     showCurrentParameterPage("VCA Loop", "On");
     vcaLoop = 1;
     srpanel.set(BUTTON6_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOOP, HIGH);
   }
   if (level2 == 1 && button6switch == 0) {
     showCurrentParameterPage("VCA Loop", "Off ");
     vcaLoop = 0;
     srpanel.set(BUTTON6_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOOP, LOW);
   }
   if (level1 == 1) {
@@ -999,12 +1028,14 @@ void updatebutton7() {
     showCurrentParameterPage("VCF Lin EG", "On");
     vcfLinear = 1;
     srpanel.set(BUTTON7_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_LOG_LIN, HIGH);
   }
   if (level2 == 1 && button7switch == 0) {
     showCurrentParameterPage("VCF Lin EG", "Off ");
     vcfLinear = 0;
     srpanel.set(BUTTON7_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCF_LOG_LIN, LOW);
   }
   if (level1 == 1) {
@@ -1018,12 +1049,14 @@ void updatebutton8() {
     showCurrentParameterPage("VCA Lin EG", "On");
     vcaLinear = 1;
     srpanel.set(BUTTON8_LED, HIGH);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, HIGH);
   }
   if (level2 == 1 && button8switch == 0) {
     showCurrentParameterPage("VCA Lin EG", "Off ");
     vcaLinear = 0;
     srpanel.set(BUTTON8_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, LOW);
   }
   if (level1 == 1) {
@@ -1035,6 +1068,7 @@ void updatebutton8() {
 void updatebutton9() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 9;
@@ -1044,21 +1078,16 @@ void updatebutton9() {
 
 void updatebutton10() {
   if (level2 == 1 && button10switch == 1) {
-    showCurrentParameterPage("Sample & Hold", "To VCO & VCF ");
-    shvco = 1;
-    shvcf = 0;
+    showCurrentParameterPage("Sample & Hold", "To VCO");
     srpanel.set(BUTTON10_LED, HIGH);
-    srpanel.set(BUTTON11_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCO, HIGH);
-    boardswitch.writePin(SH_TO_VCF, HIGH);
   }
   if (level2 == 1 && button10switch == 0) {
     showCurrentParameterPage("Sample & Hold", "Off ");
-    shvco = 0;
-    shvcf = 0;
     srpanel.set(BUTTON10_LED, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCO, LOW);
-    boardswitch.writePin(SH_TO_VCF, LOW);
   }
   if (level1 == 1) {
     patchNo = 10;
@@ -1069,19 +1098,14 @@ void updatebutton10() {
 void updatebutton11() {
   if (level2 == 1 && button11switch == 1) {
     showCurrentParameterPage("Sample & Hold", "To VCF ");
-    shvco = 0;
-    shvcf = 1;
-    srpanel.set(BUTTON10_LED, LOW);
     srpanel.set(BUTTON11_LED, HIGH);
-    boardswitch.writePin(SH_TO_VCO, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCF, HIGH);
   }
   if (level2 == 1 && button11switch == 0) {
     showCurrentParameterPage("Sample & Hold", "Off ");
-    shvco = 0;
-    shvcf = 0;
     srpanel.set(BUTTON11_LED, LOW);
-    boardswitch.writePin(SH_TO_VCO, LOW);
+    turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCF, LOW);
   }
   if (level1 == 1) {
@@ -1093,6 +1117,7 @@ void updatebutton11() {
 void updatebutton12() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 12;
@@ -1103,6 +1128,7 @@ void updatebutton12() {
 void updatebutton13() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 13;
@@ -1113,6 +1139,7 @@ void updatebutton13() {
 void updatebutton14() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 14;
@@ -1123,6 +1150,7 @@ void updatebutton14() {
 void updatebutton15() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 15;
@@ -1133,6 +1161,7 @@ void updatebutton15() {
 void updatebutton16() {
   if (level2 == 1) {
     showCurrentParameterPage("Level 2", "No Function");
+    turnOffOneandTwo();
   }
   if (level1 == 1) {
     patchNo = 16;
@@ -1140,6 +1169,9 @@ void updatebutton16() {
   }
 }
 
+void updatevolume() {
+  showCurrentParameterPage("Volume", int(volumestr));
+}
 
 void updatefilterRes() {
   showCurrentParameterPage("Resonance", int(filterResstr));
@@ -1261,7 +1293,16 @@ void updatePatchname() {
 void myControlChange(byte channel, byte control, int value) {
 
   //  Serial.println("MIDI: " + String(control) + " : " + String(value));
+  //turnOffOneandTwo();
+
   switch (control) {
+
+      case CCvolume:
+      volume = value;
+      volumestr = value / 8;
+      updatevolume();
+      break;
+
     case CCglide:
       glide = value;
       glidestr = value / 8;
@@ -1998,6 +2039,7 @@ void setCurrentPatchData(String data[]) {
   keyMode = data[60].toInt();
   modWheelDepth = data[61].toInt();
   pitchBendRange = data[62].toInt();
+  volume = data[63].toInt();
 
   //Switches
   updateosc1_32();
@@ -2045,7 +2087,7 @@ void setCurrentPatchData(String data[]) {
 }
 
 String getCurrentPatchData() {
-  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOff) + "," + String(lfoOscOn) + "," + String(lfoVCFOff) + "," + String(lfoVCFOn) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange);
+  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOff) + "," + String(lfoOscOn) + "," + String(lfoVCFOff) + "," + String(lfoVCFOn) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume);
 }
 
 void checkMux() {
@@ -2083,6 +2125,9 @@ void checkMux() {
         break;
       case MUX1_NOISE:
         myControlChange(midiChannel, CCnoiseLevel, mux1Read);
+        break;
+      case MUX1_VOLUME:
+        myControlChange(midiChannel, CCvolume, mux1Read);
         break;
     }
   }
@@ -2205,7 +2250,7 @@ void writeDemux() {
     case 12:
       // 0-5V
       setVoltage(DAC_NOTE1, 0, 1, int(filterLevel * 1.85));
-      // undefined spare
+      setVoltage(DAC_NOTE1, 1, 1, int(volume * 2));
       break;
     case 13:
       setVoltage(DAC_NOTE1, 0, 0, int(osc1foot));

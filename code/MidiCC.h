@@ -2,6 +2,7 @@
 //These broadly follow standard CC assignments
 #define   CCmodwheel  1 //pitch LFO amount - less from mod wheel
 #define   CCLfoDepth  3 //pitch LFO amount - panel control
+#define   CCvolume 7
 #define   CCglide  8
 #define   CCosc1_16 9
 #define   CCosc1_8 10

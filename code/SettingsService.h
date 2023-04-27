@@ -44,6 +44,7 @@ const char* current_setting_value();
 const char* current_setting_previous_value();
 const char* current_setting_next_value();
 
+void reset_settings();
 void increment_setting();
 void decrement_setting();
 

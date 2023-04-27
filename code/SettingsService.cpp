@@ -89,6 +89,11 @@ const char* settings::current_setting_next_value() {
 
 // Change settings
 
+void settings::reset_settings() {
+  selectedSettingIndex = 0;
+  refresh_current_value_index();
+}
+
 void settings::increment_setting() {
   selectedSettingIndex = nextSettingIndex();
   refresh_current_value_index();
