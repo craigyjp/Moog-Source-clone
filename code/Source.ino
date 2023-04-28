@@ -140,7 +140,7 @@ void setup() {
   //USB HOST MIDI Class Compliant
   delay(200);  //Wait to turn on USB Host
   myusb.begin();
-  midi1.setHandleControlChange(myControlChange);
+  midi1.setHandleControlChange(myConvertControlChange);
   midi1.setHandlePitchChange(myPitchBend);
   midi1.setHandleProgramChange(myProgramChange);
   midi1.setHandleNoteOff(myNoteOff);
@@ -148,7 +148,7 @@ void setup() {
   Serial.println("USB HOST MIDI Class Compliant Listening");
 
   //USB Client MIDI
-  usbMIDI.setHandleControlChange(myControlChange);
+  usbMIDI.setHandleControlChange(myConvertControlChange);
   usbMIDI.setHandlePitchChange(myPitchBend);
   usbMIDI.setHandleProgramChange(myProgramChange);
   usbMIDI.setHandleNoteOff(myNoteOff);
@@ -156,12 +156,13 @@ void setup() {
   usbMIDI.setHandleClock(myMIDIclock);
   usbMIDI.setHandleStart(myMIDIClockStart);
   usbMIDI.setHandleStop(myMIDIClockStop);
+  usbMIDI.setHandleAfterTouchChannel(myAfterTouch);
 
   Serial.println("USB Client MIDI Listening");
 
   //MIDI 5 Pin DIN
   MIDI.begin();
-  MIDI.setHandleControlChange(myControlChange);
+  MIDI.setHandleControlChange(myConvertControlChange);
   MIDI.setHandlePitchBend(myPitchBend);
   MIDI.setHandleProgramChange(myProgramChange);
   MIDI.setHandleNoteOn(myNoteOn);
@@ -169,6 +170,7 @@ void setup() {
   MIDI.setHandleClock(myMIDIclock);
   MIDI.setHandleStart(myMIDIClockStart);
   MIDI.setHandleStop(myMIDIClockStop);
+  MIDI.setHandleAfterTouchChannel(myAfterTouch);
 
   Serial.println("MIDI In DIN Listening");
 
@@ -295,6 +297,9 @@ void showPatchNumberButton() {
   }
 }
 
+void myAfterTouch(byte channel, byte value) {
+}
+
 void myMIDIclock() {
 
   if (millis() > clock_timeout + 300) clock_count = 0;  // Prevents Clock from starting in between quarter notes after clock is restarted!
@@ -329,24 +334,76 @@ void stopClockPulse() {
   }
 }
 
-void myPitchBend(byte channel, int bend) {
-  if ((midiChannel == channel) || (channel == 0)) {
-    // Pitch bend output from 0 to 1023 mV.  Left shift d2 by 4 to scale from 0 to 2047.
-    // With DAC gain = 1X, this will yield a range from 0 to 1023 mV.  Additional amplification
-    // after DAC will rescale to -1 to +1V.
-    d2 = midi1.getData2();  // d2 from 0 to 127, mid point = 64;
-    pitchbend = bend;
-    //setVoltage(PITCH_DAC, PITCH_AB, 1, int((bend / 8) + 1024)); // DAC7, channel 0, gain = 1X
-  }
+void myConvertControlChange(byte channel, byte number, byte value) { 
+     int newvalue = value << 3;
+     myControlChange(channel, number, newvalue);
 }
 
-void myControlChange(byte channel, byte number, byte value) {
-  if ((midiChannel == channel || channel == 0)) {
-    d2 = MIDI.getData2();
-    // CC range from 0 to 2047 mV  Left shift d2 by 5 to scale from 0 to 2047,
-    // and choose gain = 2X
-    modulation = value;
-    //setVoltage(CC_DAC, CC_AB, 1, value << 4); // DAC7, channel 1, gain = 1X
+void myPitchBend(byte channel, int bend) {
+  switch (pitchBendRange) {
+    case 0:
+      bended = 1024;
+      break;
+
+    case 1:
+      // 171
+      bended = int(bend / 96) + 1024;
+      break;
+
+    case 2:
+      // 342
+      bended = int(bend / 48) + 1024;
+      break;
+
+    case 3:
+      // 512
+      bended = int(bend / 32) + 1024;
+      break;
+
+    case 4:
+      // 682
+      bended = int(bend / 24) + 1024;
+      break;
+
+    case 5:
+      // 853
+      bended = int(bend / 19.2) + 1024;
+      break;
+
+    case 6:
+      // 1024
+      bended = (bend / 16) + 1024;
+      break;
+
+    case 7:
+      // 1195
+      bended = (bend / 13.7) + 1024;
+      break;
+
+    case 8:
+      // 1365
+      bended = (bend / 12) + 1024;
+      break;
+
+    case 9:
+      // 1536
+      bended = (bend / 10.66) + 1024;
+      break;
+
+    case 10:
+      // 1707
+      bended = (bend / 9.6) + 1024;
+      break;
+
+    case 11:
+      // 1877
+      bended = (bend / 8.73) + 1024;
+      break;
+
+    case 12:
+      // 2048
+      bended = (bend / 8) + 1024;
+      break;
   }
 }
 
@@ -577,77 +634,77 @@ void updatelfoSquare() {
 void updatesyncOff() {
   if (syncOff == 1) {
     showCurrentParameterPage("Oscillator Sync", "Off");
+    srpanel.set(SYNC_OFF_LED, HIGH);
+    srpanel.set(SYNC_ON_LED, LOW);
     boardswitch.writePin(PB_OSC1, LOW);    // pb osc1 on
     boardswitch.writePin(PB_OSC2, LOW);    // pb osc2 on
     boardswitch.writePin(SYNC, LOW);       // sync off
     boardswitch.writePin(SOFT_SYNC, LOW);  // soft sync off
     boardswitch.writePin(HARD_SYNC, LOW);  // hard sync off
-    srpanel.set(SYNC_OFF_LED, HIGH);
-    srpanel.set(SYNC_ON_LED, LOW);
   }
 }
 
 void updatesyncOn() {
   if (syncOn == 1) {
     showCurrentParameterPage("Oscillator Sync", "On");
+    srpanel.set(SYNC_OFF_LED, LOW);
+    srpanel.set(SYNC_ON_LED, HIGH);
     boardswitch.writePin(PB_OSC1, LOW);     // pb osc1 off
     boardswitch.writePin(PB_OSC2, HIGH);    // pb osc2 on
     boardswitch.writePin(SYNC, HIGH);       // sync on
     boardswitch.writePin(SOFT_SYNC, HIGH);  // soft sync on
     boardswitch.writePin(HARD_SYNC, HIGH);  // hard sync off
-    srpanel.set(SYNC_OFF_LED, LOW);
-    srpanel.set(SYNC_ON_LED, HIGH);
   }
 }
 
 void updateoctave0() {
   if (octave0 == 1) {
     showCurrentParameterPage("KBD Octave", "0");
-    boardswitch.writePin(OCTAVE, LOW);  // LED on
     srpanel.set(OCTAVE_0_LED, HIGH);
     srpanel.set(OCTAVE_1_LED, LOW);
+    boardswitch.writePin(OCTAVE, LOW);  // LED on
   }
 }
 
 void updateoctave1() {
   if (octave1 == 1) {
-    showCurrentParameterPage("KBD Octave", "+1");
-    boardswitch.writePin(OCTAVE, HIGH);  // LED on
+    showCurrentParameterPage("KBD Octave", "+1");  
     srpanel.set(OCTAVE_0_LED, LOW);
     srpanel.set(OCTAVE_1_LED, HIGH);
+    boardswitch.writePin(OCTAVE, HIGH);  // LED on
   }
 }
 
 void updatekbOff() {
   if (kbOff == 1) {
     showCurrentParameterPage("KBD Tracking", "Off");
-    boardswitch.writePin(KEYTRACK1, LOW);
-    boardswitch.writePin(KEYTRACK2, LOW);
     srpanel.set(KB_OFF_LED, HIGH);
     srpanel.set(KB_HALF_LED, LOW);
     srpanel.set(KB_FULL_LED, LOW);
+    boardswitch.writePin(KEYTRACK1, LOW);
+    boardswitch.writePin(KEYTRACK2, LOW);
   }
 }
 
 void updatekbHalf() {
   if (kbHalf == 1) {
     showCurrentParameterPage("KBD Tracking", "Half");
-    boardswitch.writePin(KEYTRACK1, LOW);
-    boardswitch.writePin(KEYTRACK2, HIGH);
     srpanel.set(KB_OFF_LED, LOW);
     srpanel.set(KB_HALF_LED, HIGH);
     srpanel.set(KB_FULL_LED, LOW);
+    boardswitch.writePin(KEYTRACK1, LOW);
+    boardswitch.writePin(KEYTRACK2, HIGH);
   }
 }
 
 void updatekbFull() {
   if (kbFull == 1) {
     showCurrentParameterPage("KBD Tracking", "Full");
-    boardswitch.writePin(KEYTRACK1, HIGH);
-    boardswitch.writePin(KEYTRACK2, HIGH);
     srpanel.set(KB_OFF_LED, LOW);
     srpanel.set(KB_HALF_LED, LOW);
     srpanel.set(KB_FULL_LED, HIGH);
+    boardswitch.writePin(KEYTRACK1, HIGH);
+    boardswitch.writePin(KEYTRACK2, HIGH);
   }
 }
 
@@ -714,39 +771,31 @@ void updateosc2_pulse() {
   }
 }
 
-void updatelfoOscOff() {
-  if (lfoOscOff == 1) {
-    showCurrentParameterPage("LFO to Osc", "Off");
-    boardswitch.writePin(LFO_TO_OSC, LOW);
-    srpanel.set(LFO_OSC_OFF_LED, HIGH);
-    srpanel.set(LFO_OSC_ON_LED, LOW);
-  }
-}
-
 void updatelfoOscOn() {
-  if (lfoOscOn == 1) {
-    showCurrentParameterPage("LFO to Osc", "On");
-    boardswitch.writePin(LFO_TO_OSC, HIGH);
+  if (lfoOscOnswitch == 1) {
+    showCurrentParameterPage("LFO to Osc", "On");    
     srpanel.set(LFO_OSC_OFF_LED, LOW);
     srpanel.set(LFO_OSC_ON_LED, HIGH);
-  }
-}
-
-void updatelfoVCFOff() {
-  if (lfoVCFOff == 1) {
-    showCurrentParameterPage("LFO to VCF", "Off");
+    boardswitch.writePin(LFO_TO_OSC, HIGH);
+  } else {
+    showCurrentParameterPage("LFO to Osc", "Off");    
+    srpanel.set(LFO_OSC_OFF_LED, HIGH);
+    srpanel.set(LFO_OSC_ON_LED, LOW);
     boardswitch.writePin(LFO_TO_OSC, LOW);
-    srpanel.set(LFO_VCF_OFF_LED, HIGH);
-    srpanel.set(LFO_VCF_ON_LED, LOW);
   }
 }
 
 void updatelfoVCFOn() {
-  if (lfoVCFOn == 1) {
+  if (lfoVCFOnswitch == 1) {
     showCurrentParameterPage("LFO to VCF", "On");
-    boardswitch.writePin(LFO_TO_OSC, HIGH);
     srpanel.set(LFO_VCF_OFF_LED, LOW);
     srpanel.set(LFO_VCF_ON_LED, HIGH);
+    boardswitch.writePin(LFO_TO_VCF, HIGH);
+  } else {
+    showCurrentParameterPage("LFO to VCF", "Off");
+    srpanel.set(LFO_VCF_OFF_LED, HIGH);
+    srpanel.set(LFO_VCF_ON_LED, LOW);
+    boardswitch.writePin(LFO_TO_VCF, LOW);
   }
 }
 
@@ -804,8 +853,9 @@ void updateshvco() {
       srpanel.set(BUTTON10_LED, HIGH);
     }
   } else {
-    boardswitch.writePin(SH_TO_VCO, LOW);
+    
     srpanel.set(BUTTON10_LED, LOW);
+    boardswitch.writePin(SH_TO_VCO, LOW);
   }
 }
 
@@ -1314,6 +1364,54 @@ void myControlChange(byte channel, byte control, int value) {
 
   switch (control) {
 
+    case CCmodwheel:
+      switch (modWheelDepth) {
+        case 0:
+          modulation = 0;
+          break;
+
+        case 1:
+          modulation = (value / 5);
+          break;
+
+        case 2:
+          modulation = (value / 4);
+          break;
+
+        case 3:
+          modulation = (value / 3.5);
+          break;
+
+        case 4:
+          modulation = (value / 3);
+          break;
+
+        case 5:
+          modulation = (value / 2.5);
+          break;
+
+        case 6:
+          modulation = (value / 2);
+          break;
+
+        case 7:
+          modulation = (value / 1.75);
+          break;
+
+        case 8:
+          modulation = (value / 1.5);
+          break;
+
+        case 9:
+          modulation = (value / 1.25);
+          break;
+
+        case 10:
+          modulation = value;
+          break;
+      }
+      break;
+
     case CCvolume:
       volume = value;
       volumestr = value / 8;
@@ -1480,26 +1578,18 @@ void myControlChange(byte channel, byte control, int value) {
       break;
 
     case CClfoOscOff:
-      lfoOscOff = 1;
-      lfoOscOn = 0;
-      updatelfoOscOff();
+      updatelfoOscOn();
       break;
 
     case CClfoOscOn:
-      lfoOscOff = 0;
-      lfoOscOn = 1;
       updatelfoOscOn();
       break;
 
     case CClfoVCFOff:
-      lfoVCFOff = 1;
-      lfoVCFOn = 0;
-      updatelfoVCFOff();
+      updatelfoVCFOn();
       break;
 
     case CClfoVCFOn:
-      lfoVCFOff = 0;
-      lfoVCFOn = 1;
       updatelfoVCFOn();
       break;
 
@@ -2012,16 +2102,16 @@ void setCurrentPatchData(String data[]) {
   multi = data[16].toInt();
   lfoTriangle = data[17].toInt();
   lfoSquare = data[18].toInt();
-  lfoOscOff = data[19].toInt();
-  lfoOscOn = data[20].toInt();
-  lfoVCFOff = data[21].toInt();
-  lfoVCFOn = data[22].toInt();
+  lfoOscOffswitch = data[19].toInt();
+  lfoOscOnswitch = data[20].toInt();
+  lfoVCFOffswitch = data[21].toInt();
+  lfoVCFOnswitch = data[22].toInt();
   syncOff = data[23].toInt();
   syncOn = data[24].toInt();
   kbOff = data[25].toInt();
   kbHalf = data[26].toInt();
   kbFull = data[27].toInt();
-  LfoRate = data[28].toFloat();
+  LfoRate = data[28].toInt();
   pwLFO = data[29].toFloat();
   osc1level = data[30].toInt();
   osc2level = data[31].toInt();
@@ -2057,6 +2147,12 @@ void setCurrentPatchData(String data[]) {
   modWheelDepth = data[61].toInt();
   pitchBendRange = data[62].toInt();
   volume = data[63].toInt();
+  clocksource = data[64].toInt();
+
+  Serial.print("LFO to OSC ON ");
+  Serial.println(lfoOscOnswitch);
+  Serial.print("LFO to OSC OFF ");
+  Serial.println(lfoOscOffswitch);
 
   //Switches
   updateosc1_32();
@@ -2082,9 +2178,9 @@ void setCurrentPatchData(String data[]) {
   updateosc2_saw();
   updateosc2_tri();
   updateosc2_pulse();
-  updatelfoOscOff();
+  //updatelfoOscOff();
   updatelfoOscOn();
-  updatelfoVCFOff();
+  //updatelfoVCFOff();
   updatelfoVCFOn();
   updateshvco();
   updateshvcf();
@@ -2104,7 +2200,7 @@ void setCurrentPatchData(String data[]) {
 }
 
 String getCurrentPatchData() {
-  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOff) + "," + String(lfoOscOn) + "," + String(lfoVCFOff) + "," + String(lfoVCFOn) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume);
+  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource);
 }
 
 void checkMux() {
@@ -2231,7 +2327,7 @@ void writeDemux() {
       setVoltage(DAC_NOTE1, 1, 1, int(pwLFO * 1.85));
       break;
     case 5:  // 2Volt
-      setVoltage(DAC_NOTE1, 0, 1, modulation << 4);
+      setVoltage(DAC_NOTE1, 0, 1, modulation * 2);
       setVoltage(DAC_NOTE1, 1, 1, int(LfoWave * 1.85));  //5v
       break;
     case 6:  // 2Volt
@@ -2239,7 +2335,7 @@ void writeDemux() {
       setVoltage(DAC_NOTE1, 1, 1, int(osc2PWM / 1.07));
       break;
     case 7:  // 2Volt
-      setVoltage(DAC_NOTE1, 0, 1, int((pitchbend / 8) + 1024));
+      setVoltage(DAC_NOTE1, 0, 1, int(bended));
       setVoltage(DAC_NOTE1, 1, 1, int(noiseLevel * 2));
       break;
     case 8:  // 10 Volt
@@ -2414,8 +2510,8 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
   }
 
   if (btnIndex == LFO_OSC_OFF && btnType == ROX_PRESSED) {
-    lfoOscOffswitch = !lfoOscOffswitch;
-    myControlChange(midiChannel, CClfoOscOff, lfoOscOffswitch);
+    lfoOscOnswitch = !lfoOscOnswitch;
+    myControlChange(midiChannel, CClfoOscOn, lfoOscOnswitch);
   }
 
   if (btnIndex == LFO_OSC_ON && btnType == ROX_PRESSED) {
@@ -2424,8 +2520,8 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
   }
 
   if (btnIndex == LFO_VCF_OFF && btnType == ROX_PRESSED) {
-    lfoVCFOffswitch = !lfoVCFOffswitch;
-    myControlChange(midiChannel, CClfoVCFOff, lfoVCFOffswitch);
+    lfoVCFOnswitch = !lfoVCFOnswitch;
+    myControlChange(midiChannel, CClfoVCFOn, lfoVCFOnswitch);
   }
 
   if (btnIndex == LFO_VCF_ON && btnType == ROX_PRESSED) {

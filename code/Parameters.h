@@ -4,6 +4,7 @@ String patchName = INITPATCHNAME;
 boolean encCW = true;//This is to set the encoder to increment when turned CW - Settings Option
 int modWheelDepth = 0;
 int pitchBendRange = 0;
+int bended = 1024;
 int keyMode = 0;
 static unsigned long clock_timer = 0, clock_timeout = 0;
 static unsigned int clock_count = 0;
@@ -15,8 +16,8 @@ int noiseLevelstr = 0; // for display
 int glide = 0;
 int glidestr = 0; // for display
 
-int volume = 0;
-int volumestr = 0; // for display
+float volume = 0;
+float volumestr = 0; // for display
 
 int osc1_32 = 0;
 int osc1_32switch = 0;
