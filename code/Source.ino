@@ -183,15 +183,16 @@ void setup() {
   //Read Mod Wheel Depth from EEPROM, this can be set individually by each patch.
   modWheelDepth = getModWheelDepth();
 
-
-
+  //Read AfterTouch Depth from EEPROM, this can be set individually by each patch.
+  afterTouchDepth = getAfterTouchDepth();
 
   //Read Encoder Direction from EEPROM
   encCW = getEncoderDir();
   level1 = 1;
   level2 = 0;
-  srpanel.set(OSC2_32_LED, HIGH);
-  srpanel.set(OSC2_32_LED, LOW);
+
+  // srpanel.set(OSC2_32_LED, HIGH);
+  // srpanel.set(OSC2_32_LED, LOW);
 
   mux.begin(PIN_DATA, PIN_LOAD, PIN_CLK);
   mux.setCallback(onButtonPress);
@@ -298,6 +299,54 @@ void showPatchNumberButton() {
 }
 
 void myAfterTouch(byte channel, byte value) {
+
+  int newvalue = (value << 3);
+
+  switch (afterTouchDepth) {
+    case 0:
+      modulation = 0;
+      break;
+
+    case 1:
+      modulation = int(newvalue / 5);
+      break;
+
+    case 2:
+      modulation = int(newvalue / 4);
+      break;
+
+    case 3:
+      modulation = int(newvalue / 3.5);
+      break;
+
+    case 4:
+      modulation = int(newvalue / 3);
+      break;
+
+    case 5:
+      modulation = int(newvalue / 2.5);
+      break;
+
+    case 6:
+      modulation = int(newvalue / 2);
+      break;
+
+    case 7:
+      modulation = int(newvalue / 1.75);
+      break;
+
+    case 8:
+      modulation = int(newvalue / 1.5);
+      break;
+
+    case 9:
+      modulation = int(newvalue / 1.25);
+      break;
+
+    case 10:
+      modulation = int(newvalue);
+      break;
+  }
 }
 
 void myMIDIclock() {
@@ -334,9 +383,9 @@ void stopClockPulse() {
   }
 }
 
-void myConvertControlChange(byte channel, byte number, byte value) { 
-     int newvalue = value << 3;
-     myControlChange(channel, number, newvalue);
+void myConvertControlChange(byte channel, byte number, byte value) {
+  int newvalue = value << 3;
+  myControlChange(channel, number, newvalue);
 }
 
 void myPitchBend(byte channel, int bend) {
@@ -668,7 +717,7 @@ void updateoctave0() {
 
 void updateoctave1() {
   if (octave1 == 1) {
-    showCurrentParameterPage("KBD Octave", "+1");  
+    showCurrentParameterPage("KBD Octave", "+1");
     srpanel.set(OCTAVE_0_LED, LOW);
     srpanel.set(OCTAVE_1_LED, HIGH);
     boardswitch.writePin(OCTAVE, HIGH);  // LED on
@@ -773,12 +822,12 @@ void updateosc2_pulse() {
 
 void updatelfoOscOn() {
   if (lfoOscOnswitch == 1) {
-    showCurrentParameterPage("LFO to Osc", "On");    
+    showCurrentParameterPage("LFO to Osc", "On");
     srpanel.set(LFO_OSC_OFF_LED, LOW);
     srpanel.set(LFO_OSC_ON_LED, HIGH);
     boardswitch.writePin(LFO_TO_OSC, HIGH);
   } else {
-    showCurrentParameterPage("LFO to Osc", "Off");    
+    showCurrentParameterPage("LFO to Osc", "Off");
     srpanel.set(LFO_OSC_OFF_LED, HIGH);
     srpanel.set(LFO_OSC_ON_LED, LOW);
     boardswitch.writePin(LFO_TO_OSC, LOW);
@@ -853,7 +902,7 @@ void updateshvco() {
       srpanel.set(BUTTON10_LED, HIGH);
     }
   } else {
-    
+
     srpanel.set(BUTTON10_LED, LOW);
     boardswitch.writePin(SH_TO_VCO, LOW);
   }
@@ -2148,11 +2197,7 @@ void setCurrentPatchData(String data[]) {
   pitchBendRange = data[62].toInt();
   volume = data[63].toInt();
   clocksource = data[64].toInt();
-
-  Serial.print("LFO to OSC ON ");
-  Serial.println(lfoOscOnswitch);
-  Serial.print("LFO to OSC OFF ");
-  Serial.println(lfoOscOffswitch);
+  afterTouchDepth = data[65].toInt();
 
   //Switches
   updateosc1_32();
@@ -2178,9 +2223,7 @@ void setCurrentPatchData(String data[]) {
   updateosc2_saw();
   updateosc2_tri();
   updateosc2_pulse();
-  //updatelfoOscOff();
   updatelfoOscOn();
-  //updatelfoVCFOff();
   updatelfoVCFOn();
   updateshvco();
   updateshvcf();
@@ -2200,7 +2243,7 @@ void setCurrentPatchData(String data[]) {
 }
 
 String getCurrentPatchData() {
-  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource);
+  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth);
 }
 
 void checkMux() {

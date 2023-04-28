@@ -4,6 +4,7 @@ String patchName = INITPATCHNAME;
 boolean encCW = true;//This is to set the encoder to increment when turned CW - Settings Option
 int modWheelDepth = 0;
 int pitchBendRange = 0;
+int afterTouchDepth = 0;
 int bended = 1024;
 int keyMode = 0;
 static unsigned long clock_timer = 0, clock_timeout = 0;

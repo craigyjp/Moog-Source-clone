@@ -51,6 +51,15 @@ void settingsModWheelDepth(int index, const char *value) {
   storeModWheelDepth(modWheelDepth);
 }
 
+void settingsAfterTouchDepth(int index, const char *value) {
+  if (strcmp(value, "Off") == 0) {
+    afterTouchDepth = 0;
+  } else {
+    afterTouchDepth = atoi(value);
+  }
+  storeAfterTouchDepth(afterTouchDepth);
+}
+
 void settingsKeyMode(int index, const char *value) {
   if (strcmp(value, "Top") == 0) keyMode = 4;
   if (strcmp(value, "Bottom") == 0)  keyMode =  5;
@@ -80,6 +89,10 @@ int currentIndexModWheelDepth() {
   return getModWheelDepth();
 }
 
+int currentIndexAfterTouchDepth() {
+  return getAfterTouchDepth();
+}
+
 int currentIndexKeyMode() {
   float value = getKeyMode();
   if (value == 4) return 0;
@@ -99,5 +112,6 @@ void setUpSettings() {
   settings::append(settings::SettingsOption{ "Encoder", { "Type 1", "Type 2", "\0" }, settingsEncoderDir, currentIndexEncoderDir });
   settings::append(settings::SettingsOption{ "Pitch Bend", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "\0" }, settingsPitchBend, currentIndexPitchBend });
   settings::append(settings::SettingsOption{ "MW Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsModWheelDepth, currentIndexModWheelDepth });
+  settings::append(settings::SettingsOption{ "AT Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsAfterTouchDepth, currentIndexAfterTouchDepth });
   settings::append(settings::SettingsOption{ "LFO Clock", {"External", "MIDI", "\0"}, settingsClockSource, currentIndexClockSource });
 }

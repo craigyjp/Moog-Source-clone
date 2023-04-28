@@ -7,6 +7,8 @@
 #define EEPROM_ENCODER_DIR 4
 #define EEPROM_LAST_PATCH 5
 #define EEPROM_CLOCK_SOURCE 6
+#define EEPROM_AT_DEPTH 7
+#define EEPROM_AT_DESTINATION 8
 
 int getMIDIChannel() {
   byte midiChannel = EEPROM.read(EEPROM_MIDI_CH);
@@ -38,8 +40,20 @@ int getModWheelDepth() {
 
 void storeModWheelDepth(byte mwDepth)
 {
-  byte mw =  mwDepth;
+  byte mw = mwDepth;
   EEPROM.update(EEPROM_MODWHEEL_DEPTH, mw);
+}
+
+int getAfterTouchDepth() {
+  byte at = EEPROM.read(EEPROM_AT_DEPTH);
+  if (at < 0 || at > 10) return afterTouchDepth; //If EEPROM has no mod wheel depth stored
+  return at;
+}
+
+void storeAfterTouchDepth(byte atDepth)
+{
+  byte at = atDepth;
+  EEPROM.update(EEPROM_AT_DEPTH, at);
 }
 
 boolean getEncoderDir() {
