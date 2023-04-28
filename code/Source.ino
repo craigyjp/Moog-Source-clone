@@ -506,10 +506,10 @@ void commandNote(int noteMsg) {
 
   analogWrite(A21, CV);
 
-  if (gatepulse == 0 && single == 1) {
+  if (gatepulse == 0 && multiswitch == 0) {
     digitalWrite(TRIG_NOTE1, HIGH);
   }
-  if (multi == 1) {
+  if (multiswitch == 1) {
     digitalWrite(TRIG_NOTE1, HIGH);
   }
   digitalWrite(GATE_NOTE1, HIGH);
@@ -646,20 +646,17 @@ void updateosc1_pulse() {
   }
 }
 
-void updatesingle() {
-  if (single == 1) {
+void updatemulti() {
+  if (multiswitch == 1) {
+    showCurrentParameterPage("Multi Trigger", "On");
+    srpanel.set(MULTIPLE_TRIG_LED, HIGH);  // LED on
+    srpanel.set(SINGLE_TRIG_LED, LOW);     // LED off
+  } else {
     showCurrentParameterPage("Single Trigger", "On");
     srpanel.set(SINGLE_TRIG_LED, HIGH);   // LED on
     srpanel.set(MULTIPLE_TRIG_LED, LOW);  // LED off
   }
-}
 
-void updatemulti() {
-  if (multi == 1) {
-    showCurrentParameterPage("Multi Trigger", "On");
-    srpanel.set(MULTIPLE_TRIG_LED, HIGH);  // LED on
-    srpanel.set(SINGLE_TRIG_LED, LOW);     // LED off
-  }
 }
 
 void updatelfoTriangle() {
@@ -1515,15 +1512,7 @@ void myControlChange(byte channel, byte control, int value) {
       updateosc1_pulse();
       break;
 
-    case CCsingle:
-      single = 1;
-      multi = 0;
-      updatesingle();
-      break;
-
     case CCmulti:
-      multi = 1;
-      single = 0;
       updatemulti();
       break;
 
@@ -2148,7 +2137,7 @@ void setCurrentPatchData(String data[]) {
   osc2_tri = data[13].toInt();
   osc2_pulse = data[14].toInt();
   single = data[15].toInt();
-  multi = data[16].toInt();
+  multiswitch = data[16].toInt();
   lfoTriangle = data[17].toInt();
   lfoSquare = data[18].toInt();
   lfoOscOffswitch = data[19].toInt();
@@ -2206,7 +2195,6 @@ void setCurrentPatchData(String data[]) {
   updateosc1_saw();
   updateosc1_tri();
   updateosc1_pulse();
-  updatesingle();
   updatemulti();
   updatelfoTriangle();
   updatelfoSquare();
@@ -2243,7 +2231,7 @@ void setCurrentPatchData(String data[]) {
 }
 
 String getCurrentPatchData() {
-  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(single) + "," + String(multi) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth);
+  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(singleswitch) + "," + String(multiswitch) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth);
 }
 
 void checkMux() {
@@ -2466,8 +2454,8 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
   }
 
   if (btnIndex == SINGLE_TRIG && btnType == ROX_PRESSED) {
-    singleswitch = !singleswitch;
-    myControlChange(midiChannel, CCsingle, singleswitch);
+    multiswitch = !multiswitch;
+    myControlChange(midiChannel, CCmulti, multiswitch);
   }
 
   if (btnIndex == MULTIPLE_TRIG && btnType == ROX_PRESSED) {
@@ -2699,6 +2687,7 @@ void checkSwitches() {
           if (patches.size() < PATCHES_LIMIT) {
             resetPatchesOrdering();  //Reset order of patches from first patch
             patches.push({ patches.size() + 1, INITPATCHNAME });
+            //patches.push({ patchNo, patchName });
             state = SAVE;
           }
           break;
