@@ -69,9 +69,7 @@ void storeEncoderDir(byte encoderDir)
 
 float getKeyMode() {
   byte keyMode = EEPROM.read(EEPROM_KEY_MODE);
-  if (keyMode == 0) return 4;
-  if (keyMode== 1) return 5;
-  if (keyMode == 2) return 6;
+  if (keyMode < 0 || keyMode > 2) return keyMode;
   return keyMode; //If EEPROM has no key tracking stored
 }
 

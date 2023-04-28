@@ -61,9 +61,9 @@ void settingsAfterTouchDepth(int index, const char *value) {
 }
 
 void settingsKeyMode(int index, const char *value) {
-  if (strcmp(value, "Top") == 0) keyMode = 4;
-  if (strcmp(value, "Bottom") == 0)  keyMode =  5;
-  if (strcmp(value, "Last") == 0) keyMode =  6;
+  if (strcmp(value, "Top") == 0) keyMode = 0;
+  if (strcmp(value, "Bottom") == 0)  keyMode =  1;
+  if (strcmp(value, "Last") == 0) keyMode =  2;
   storeKeyMode(keyMode);
 }
 
@@ -95,9 +95,9 @@ int currentIndexAfterTouchDepth() {
 
 int currentIndexKeyMode() {
   float value = getKeyMode();
-  if (value == 4) return 0;
-  if (value == 5) return 1;
-  if (value == 6) return 2;
+  if (value == 0) return 0;
+  if (value == 1) return 1;
+  if (value == 2) return 2;
   return 0;
 }
 

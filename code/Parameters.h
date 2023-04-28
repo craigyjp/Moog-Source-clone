@@ -2,6 +2,10 @@
 byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
 String patchName = INITPATCHNAME;
 boolean encCW = true;//This is to set the encoder to increment when turned CW - Settings Option
+
+unsigned int CV =0;
+unsigned int velCV = 0;
+
 int modWheelDepth = 0;
 int pitchBendRange = 0;
 int afterTouchDepth = 0;

@@ -285,7 +285,7 @@ Bounce backButton = Bounce(BACK_SW, DEBOUNCE);
 boolean panic = true; //Hack for back button
 Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder
 
-#define QUANTISE_FACTOR 7
+#define QUANTISE_FACTOR 10
 
 void setupHardware()
 {

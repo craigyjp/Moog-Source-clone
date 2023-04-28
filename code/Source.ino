@@ -221,7 +221,7 @@ void setVoltage(int dacpin, bool channel, bool gain, unsigned int mV) {
   command |= gain ? 0x0000 : 0x2000;
   command |= (mV & 0x0FFF);
 
-  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
   digitalWrite(dacpin, LOW);
   SPI.transfer(command >> 8);
   SPI.transfer(command & 0xFF);
@@ -502,9 +502,10 @@ void commandLastNote() {
 }
 
 void commandNote(int noteMsg) {
-  unsigned int CV = (unsigned int)((float)(noteMsg + transpose + realoctave) * NOTE_SF * 1.0 + 0.5);
+  CV = (unsigned int)((float)(noteMsg + transpose + realoctave) * NOTE_SF * 1.0 + 0.5);
 
   analogWrite(A21, CV);
+  analogWrite(A22, velCV);
 
   if (gatepulse == 0 && multiswitch == 0) {
     digitalWrite(TRIG_NOTE1, HIGH);
@@ -523,53 +524,52 @@ void commandNote(int noteMsg) {
 
 
 void myNoteOn(byte channel, byte note, byte velocity) {
+
   noteMsg = note;
+  notes[noteMsg] = true;
 
-  if (velocity == 0) {
-    notes[noteMsg] = false;
-  } else {
-    notes[noteMsg] = true;
-  }
-  unsigned int velCV = ((unsigned int)((float)velocity) * 22);
+  velCV = ((unsigned int)((float)velocity) * 22);
 
-  analogWrite(A22, velCV);
+  switch (keyMode) {
+    case 0:
+      commandTopNote();
+      break;
 
-  if (keyMode == 4) {  // Highest note priority
-    commandTopNote();
-  } else if (keyMode == 5) {  // Lowest note priority
-    commandBottomNote();
-  } else {                 // Last note priority
-    if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
-      orderIndx = (orderIndx + 1) % 40;
-      noteOrder[orderIndx] = noteMsg;
-    }
-    commandLastNote();
+    case 1:
+      commandBottomNote();
+      break;
+
+    case 2:
+      if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+        orderIndx = (orderIndx + 1) % 40;
+        noteOrder[orderIndx] = noteMsg;
+      }
+      commandLastNote();
+      break;
   }
 }
 
 
 void myNoteOff(byte channel, byte note, byte velocity) {
   noteMsg = note;
-
-  //if (velocity == 0) {
   notes[noteMsg] = false;
-  //} else {
-  //  notes[noteMsg] = true;
-  //}
 
-  // Pins NP_SEL1 and NP_SEL2 indictate note priority
-  unsigned int velmV = ((unsigned int)((float)velocity) * 1.25);
-  setVoltage(DAC_NOTE1, 1, 1, velmV << 4);
-  if (keyMode == 4) {  // Highest note priority
-    commandTopNote();
-  } else if (keyMode == 5) {  // Lowest note priority
-    commandBottomNote();
-  } else {                 // Last note priority
-    if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
-      orderIndx = (orderIndx + 1) % 40;
-      noteOrder[orderIndx] = noteMsg;
-    }
-    commandLastNote();
+  switch (keyMode) {
+    case 0:
+      commandTopNote();
+      break;
+
+    case 1:
+      commandBottomNote();
+      break;
+
+    case 2:
+      if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+        orderIndx = (orderIndx + 1) % 40;
+        noteOrder[orderIndx] = noteMsg;
+      }
+      commandLastNote();
+      break;
   }
 }
 
@@ -656,7 +656,6 @@ void updatemulti() {
     srpanel.set(SINGLE_TRIG_LED, HIGH);   // LED on
     srpanel.set(MULTIPLE_TRIG_LED, LOW);  // LED off
   }
-
 }
 
 void updatelfoTriangle() {
