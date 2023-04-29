@@ -68,7 +68,7 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  //RX - Pin 0
 // MIDI to CV conversion
 //
 
-bool notes[88] = { 0 };
+bool notes[128] = { 0 };
 int8_t noteOrder[80] = { 0 }, orderIndx = { 0 };
 int noteMsg;
 unsigned long trigTimer = 0;
@@ -210,7 +210,7 @@ void setup() {
       boardswitch.writePin(CLOCK_SOURCE, HIGH);
       break;
   }
-  
+
   srpanel.set(LEVEL1_LED, HIGH);
   patchNo = getLastPatch();
   recallPatch(patchNo);  //Load first patch
@@ -356,7 +356,6 @@ void myMIDIclock() {
   clock_timeout = millis();
 
   if (clock_count == 0) {
-    //Serial.println("Starting pulse");
     digitalWrite(CLOCK, HIGH);  // Start clock pulse
     clock_timer = millis();
   }
@@ -377,11 +376,18 @@ void myMIDIClockStop() {
 
 
 void stopClockPulse() {
-  //Serial.println("Stopping pulse");
   if ((clock_timer > 0) && (millis() - clock_timer > 20)) {
     digitalWrite(CLOCK, LOW);  // Set clock pulse low after 20 msec
     clock_timer = 0;
   }
+}
+
+void stopTriggerPulse() {
+  while (millis() < trigTimer + trigTimeout) {
+    // wait 50 milliseconds
+  }
+  digitalWrite(TRIG_NOTE1, LOW);
+  trigTimer = 0;
 }
 
 void myConvertControlChange(byte channel, byte number, byte value) {
@@ -460,33 +466,37 @@ void myPitchBend(byte channel, int bend) {
 void commandTopNote() {
   int topNote = 0;
   bool noteActive = false;
-  for (int i = 0; i < 88; i++) {
+
+  for (int i = 0; i < 128; i++) {
     if (notes[i]) {
       topNote = i;
       noteActive = true;
     }
   }
-  if (noteActive)
+
+  if (noteActive) {
     commandNote(topNote);
-  else  // All notes are off, turn off gate
+  } else {  // All notes are off, turn off gate
     digitalWrite(GATE_NOTE1, LOW);
-  gatepulse = 0;
+    gatepulse = 0;
+  }
 }
 
 void commandBottomNote() {
   int bottomNote = 0;
   bool noteActive = false;
-  for (int i = 87; i >= 0; i--) {
+  for (int i = 127; i >= 0; i--) {
     if (notes[i]) {
       bottomNote = i;
       noteActive = true;
     }
   }
-  if (noteActive)
+  if (noteActive) {
     commandNote(bottomNote);
-  else  // All notes are off, turn off gate
+  } else {  // All notes are off, turn off gate
     digitalWrite(GATE_NOTE1, LOW);
-  gatepulse = 0;
+    gatepulse = 0;
+  }
 }
 
 void commandLastNote() {
@@ -498,29 +508,43 @@ void commandLastNote() {
       return;
     }
   }
+
   digitalWrite(GATE_NOTE1, LOW);  // All notes are off
   gatepulse = 0;
 }
 
 void commandNote(int noteMsg) {
+
   CV = (unsigned int)((float)(noteMsg + transpose + realoctave) * NOTE_SF * 1.0 + 0.5);
 
   analogWrite(A21, CV);
   analogWrite(A22, velCV);
 
+
+
   if (gatepulse == 0 && multiswitch == 0) {
+
     digitalWrite(TRIG_NOTE1, HIGH);
+    trigTimer = millis();
+    digitalWrite(GATE_NOTE1, HIGH);
+    gatepulse = 1;
   }
-  if (multiswitch == 1) {
+
+  if (gatepulse == 0 && multiswitch == 1) {
+
     digitalWrite(TRIG_NOTE1, HIGH);
+    trigTimer = millis();
+    digitalWrite(GATE_NOTE1, HIGH);
+    gatepulse = 1;
   }
-  digitalWrite(GATE_NOTE1, HIGH);
-  gatepulse = 1;
-  trigTimer = millis();
-  while (millis() < trigTimer + trigTimeout) {
-    // wait 50 milliseconds
+
+  if (gatepulse == 1 && multiswitch == 1) {
+    if (oldnote != noteMsg) {
+      digitalWrite(TRIG_NOTE1, HIGH);
+      trigTimer = millis();
+    }
+    oldnote = noteMsg;
   }
-  digitalWrite(TRIG_NOTE1, LOW);
 }
 
 
@@ -1000,8 +1024,8 @@ void updateextclock() {
   } else {
     boardswitch.writePin(CLOCK_SOURCE, HIGH);
     if (level2 == 1) {
-    srpanel.set(BUTTON13_LED, HIGH);
-    srpanel.set(BUTTON12_LED, LOW);
+      srpanel.set(BUTTON13_LED, HIGH);
+      srpanel.set(BUTTON12_LED, LOW);
     }
   }
 }
@@ -1245,7 +1269,7 @@ void updatebutton11() {
 }
 
 void updatebutton12() {
-  if (level2 == 1 && button12switch == 1 ) {
+  if (level2 == 1 && button12switch == 1) {
     showCurrentParameterPage("LFO Sync", "External");
     srpanel.set(BUTTON12_LED, HIGH);
     srpanel.set(BUTTON13_LED, LOW);
@@ -1262,7 +1286,7 @@ void updatebutton12() {
 }
 
 void updatebutton13() {
-  if (level2 == 1 && button13switch == 1 ) {
+  if (level2 == 1 && button13switch == 1) {
     showCurrentParameterPage("LFO Sync", "MIDI");
     srpanel.set(BUTTON13_LED, HIGH);
     srpanel.set(BUTTON12_LED, LOW);
@@ -1433,9 +1457,6 @@ void updatePatchname() {
 }
 
 void myControlChange(byte channel, byte control, int value) {
-
-  //  Serial.println("MIDI: " + String(control) + " : " + String(value));
-  //turnOffOneandTwo();
 
   switch (control) {
 
@@ -2982,6 +3003,7 @@ void loop() {
   checkSwitches();
   checkEncoder();
   stopClockPulse();
+  stopTriggerPulse();
   checkEEProm();
 }
 
