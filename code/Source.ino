@@ -923,10 +923,13 @@ void updateshvco() {
     if (level2 == 1) {
       srpanel.set(BUTTON10_LED, HIGH);
     }
+    button10switch = 1;
   } else {
-
-    srpanel.set(BUTTON10_LED, LOW);
     boardswitch.writePin(SH_TO_VCO, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON10_LED, LOW);
+    }
+    button10switch = 0;
   }
 }
 
@@ -936,9 +939,13 @@ void updateshvcf() {
     if (level2 == 1) {
       srpanel.set(BUTTON11_LED, HIGH);
     }
+    button11switch = 1;
   } else {
     boardswitch.writePin(SH_TO_VCF, LOW);
-    srpanel.set(BUTTON11_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON11_LED, LOW);
+    }
+    button11switch = 0;
   }
 }
 
@@ -948,9 +955,13 @@ void updatevcfVelocity() {
     if (level2 == 1) {
       srpanel.set(BUTTON3_LED, HIGH);
     }
+    button3switch = 1;
   } else {
     boardswitch.writePin(VCF_VELOCITY, LOW);
-    srpanel.set(BUTTON3_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON3_LED, LOW);
+    }
+    button3switch = 0;
   }
 }
 
@@ -960,9 +971,13 @@ void updatevcaVelocity() {
     if (level2 == 1) {
       srpanel.set(BUTTON4_LED, HIGH);
     }
+    button4switch = 1;
   } else {
     boardswitch.writePin(VCA_LOG_LIN, LOW);
-    srpanel.set(BUTTON4_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON4_LED, LOW);
+    }
+    button4switch = 0;
   }
 }
 
@@ -972,9 +987,13 @@ void updatevcfLoop() {
     if (level2 == 1) {
       srpanel.set(BUTTON5_LED, HIGH);
     }
+    button5switch = 1;
   } else {
     boardswitch.writePin(VCF_LOOP, LOW);
-    srpanel.set(BUTTON5_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON5_LED, LOW);
+    }
+    button5switch = 0;
   }
 }
 
@@ -984,9 +1003,13 @@ void updatevcaLoop() {
     if (level2 == 1) {
       srpanel.set(BUTTON6_LED, HIGH);
     }
+    button6switch = 1;
   } else {
     boardswitch.writePin(VCA_LOOP, LOW);
-    srpanel.set(BUTTON6_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON6_LED, LOW);
+    }
+    button6switch = 0;
   }
 }
 
@@ -996,9 +1019,13 @@ void updatevcfLinear() {
     if (level2 == 1) {
       srpanel.set(BUTTON7_LED, HIGH);
     }
+    button7switch = 1;
   } else {
     boardswitch.writePin(VCF_LOG_LIN, LOW);
-    srpanel.set(BUTTON7_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON7_LED, LOW);
+    }
+    button7switch = 0;
   }
 }
 
@@ -1008,9 +1035,13 @@ void updatevcaLinear() {
     if (level2 == 1) {
       srpanel.set(BUTTON8_LED, HIGH);
     }
+    button8switch = 1;
   } else {
     boardswitch.writePin(VCA_LOG_LIN, LOW);
-    srpanel.set(BUTTON8_LED, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON8_LED, LOW);
+    }
+    button8switch = 0;
   }
 }
 
