@@ -553,7 +553,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
   noteMsg = note;
   notes[noteMsg] = true;
 
-  velCV = ((unsigned int)((float)velocity) * 22);
+  velCV = ((unsigned int)((float)velocity) * 24.43);
 
   switch (keyMode) {
     case 0:
@@ -967,13 +967,13 @@ void updatevcfVelocity() {
 
 void updatevcaVelocity() {
   if (vcaVelocity == 1) {
-    boardswitch.writePin(VCA_LOG_LIN, HIGH);
+    boardswitch.writePin(VCA_VELOCITY, HIGH);
     if (level2 == 1) {
       srpanel.set(BUTTON4_LED, HIGH);
     }
     button4switch = 1;
   } else {
-    boardswitch.writePin(VCA_LOG_LIN, LOW);
+    boardswitch.writePin(VCA_VELOCITY, LOW);
     if (level2 == 1) {
       srpanel.set(BUTTON4_LED, LOW);
     }
@@ -1151,14 +1151,14 @@ void updatebutton4() {
     vcaVelocity = 1;
     srpanel.set(BUTTON4_LED, HIGH);
     turnOffOneandTwo();
-    boardswitch.writePin(VCA_LOG_LIN, HIGH);
+    boardswitch.writePin(VCA_VELOCITY, HIGH);
   }
   if (level2 == 1 && button4switch == 0) {
     showCurrentParameterPage("VCA Vel", "Off ");
     vcaVelocity = 0;
     srpanel.set(BUTTON4_LED, LOW);
     turnOffOneandTwo();
-    boardswitch.writePin(VCA_LOG_LIN, LOW);
+    boardswitch.writePin(VCA_VELOCITY, LOW);
   }
   if (level1 == 1) {
     patchNo = 4;

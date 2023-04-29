@@ -100,6 +100,7 @@ ADC *adc = new ADC();
 #define VCF_LOG_LIN 20
 #define VCA_LOG_LIN 21
 #define VCA_VELOCITY 22
+#define SPARE_23 23
 
 
 // front panel Buttons
