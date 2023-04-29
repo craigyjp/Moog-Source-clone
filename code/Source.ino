@@ -210,7 +210,8 @@ void setup() {
       boardswitch.writePin(CLOCK_SOURCE, HIGH);
       break;
   }
-
+  
+  srpanel.set(LEVEL1_LED, HIGH);
   patchNo = getLastPatch();
   recallPatch(patchNo);  //Load first patch
 }
@@ -888,6 +889,7 @@ void updatelevel2() {
     updatevcaLoop();
     updatevcfLinear();
     updatevcaLinear();
+    updateextclock();
   }
 }
 
@@ -985,6 +987,22 @@ void updatevcaLinear() {
   } else {
     boardswitch.writePin(VCA_LOG_LIN, LOW);
     srpanel.set(BUTTON8_LED, LOW);
+  }
+}
+
+void updateextclock() {
+  if (clocksource == 0) {
+    boardswitch.writePin(CLOCK_SOURCE, LOW);
+    if (level2 == 1) {
+      srpanel.set(BUTTON12_LED, HIGH);
+      srpanel.set(BUTTON13_LED, LOW);
+    }
+  } else {
+    boardswitch.writePin(CLOCK_SOURCE, HIGH);
+    if (level2 == 1) {
+    srpanel.set(BUTTON13_LED, HIGH);
+    srpanel.set(BUTTON12_LED, LOW);
+    }
   }
 }
 
@@ -1227,9 +1245,15 @@ void updatebutton11() {
 }
 
 void updatebutton12() {
-  if (level2 == 1) {
-    showCurrentParameterPage("Level 2", "No Function");
+  if (level2 == 1 && button12switch == 1 ) {
+    showCurrentParameterPage("LFO Sync", "External");
+    srpanel.set(BUTTON12_LED, HIGH);
+    srpanel.set(BUTTON13_LED, LOW);
+    boardswitch.writePin(CLOCK_SOURCE, LOW);
+    clocksource = 0;
+    storeClockSource(clocksource);
     turnOffOneandTwo();
+    button12switch = 0;
   }
   if (level1 == 1) {
     patchNo = 12;
@@ -1238,9 +1262,15 @@ void updatebutton12() {
 }
 
 void updatebutton13() {
-  if (level2 == 1) {
-    showCurrentParameterPage("Level 2", "No Function");
+  if (level2 == 1 && button13switch == 1 ) {
+    showCurrentParameterPage("LFO Sync", "MIDI");
+    srpanel.set(BUTTON13_LED, HIGH);
+    srpanel.set(BUTTON12_LED, LOW);
+    boardswitch.writePin(CLOCK_SOURCE, HIGH);
+    clocksource = 1;
+    storeClockSource(clocksource);
     turnOffOneandTwo();
+    button13switch = 0;
   }
   if (level1 == 1) {
     patchNo = 13;
@@ -2220,6 +2250,7 @@ void setCurrentPatchData(String data[]) {
   updatevcaLoop();
   updatevcfLinear();
   updatevcaLinear();
+  updateextclock();
 
 
   //Patchname
