@@ -17,6 +17,31 @@ int clocksource = 0;
 int oldclocksource = 0;
 int oldnote = 0;
 
+constexpr uint8_t MAX_ARP_STEPS = 24;
+
+uint8_t arpNotes[MAX_ARP_STEPS];
+uint8_t arpLength = 0;
+uint8_t arpIndex  = 0;
+
+bool arpEnabled   = false;   // Button 9
+bool arpPlaying   = false;
+bool arpRecording = false;
+
+uint8_t firstArpNote = 0;
+bool firstNoteSet = false;
+
+elapsedMicros arpTimer;
+
+uint32_t arpStepMicros = 250000;   // derived from LFO
+uint32_t arpGateMicros = 200000;   // ~80%
+
+enum ArpPhase {
+  ARP_GATE_OFF,
+  ARP_GATE_ON
+};
+
+ArpPhase arpPhase = ARP_GATE_OFF;
+
 int noiseLevel = 0;
 int noiseLevelstr = 0; // for display
 int glide = 0;

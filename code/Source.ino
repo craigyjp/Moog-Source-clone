@@ -216,6 +216,101 @@ void setup() {
   recallPatch(patchNo);  //Load first patch
 }
 
+inline void arpGateOff() {
+  digitalWrite(GATE_NOTE1, LOW);
+  gatepulse = 0;
+}
+
+void arpEnable() {
+  arpEnabled   = true;
+  arpRecording = true;
+  arpPlaying   = false;
+
+  arpLength = 0;
+  arpIndex  = 0;
+  firstNoteSet = false;
+
+  arpGateOff();
+}
+
+void arpStop() {
+  arpPlaying = false;
+  arpRecording = false;
+  arpGateOff();
+}
+
+void arpContinue() {
+  if (arpLength == 0) return;
+
+  arpIndex = 0;
+  arpPhase = ARP_GATE_OFF;
+  arpTimer = 0;
+
+  arpPlaying = true;
+}
+
+void arpNoteInput(uint8_t note) {
+
+  // If playing or stopped, ANY key resets and re-enters record
+  if (arpPlaying || (!arpRecording && arpEnabled)) {
+    arpStop();
+    arpRecording = true;
+    arpLength = 0;
+    arpIndex = 0;
+    firstNoteSet = false;
+  }
+
+  // First note defines loop start/end marker
+  if (!firstNoteSet) {
+    firstArpNote = note;
+    arpNotes[0] = note;
+    arpLength = 1;
+    firstNoteSet = true;
+    return;
+  }
+
+  // Re-hit first note closes sequence and starts playback
+  if (note == firstArpNote && arpLength > 1) {
+    arpRecording = false;
+    arpPlaying = true;
+    arpIndex = 0;
+    arpPhase = ARP_GATE_OFF;
+    arpTimer = 0;
+    return;
+  }
+
+  // Append step
+  if (arpLength < MAX_ARP_STEPS) {
+    arpNotes[arpLength++] = note;
+  }
+}
+
+void arpEngine() {
+  if (!arpPlaying || arpLength == 0) return;
+
+  switch (arpPhase) {
+
+    case ARP_GATE_OFF:
+      if (arpTimer >= (arpStepMicros - arpGateMicros)) {
+        arpTimer = 0;
+
+        commandNote(arpNotes[arpIndex]);
+        arpIndex = (arpIndex + 1) % arpLength;
+
+        arpPhase = ARP_GATE_ON;
+      }
+      break;
+
+    case ARP_GATE_ON:
+      if (arpTimer >= arpGateMicros) {
+        arpGateOff();
+        arpTimer = 0;
+        arpPhase = ARP_GATE_OFF;
+      }
+      break;
+  }
+}
+
 void setVoltage(int dacpin, bool channel, bool gain, unsigned int mV) {
   int command = channel ? 0x9000 : 0x1000;
 
@@ -550,6 +645,12 @@ void commandNote(int noteMsg) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
+  if (arpEnabled) {
+    velCV = ((unsigned int)((float)velocity) * 24.43);
+    arpNoteInput(note);
+    return;   // swallow MIDI note
+  }
+
   noteMsg = note;
   notes[noteMsg] = true;
 
@@ -576,6 +677,11 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 
 
 void myNoteOff(byte channel, byte note, byte velocity) {
+
+  if (arpEnabled) {
+    return;   // arp owns gate timing
+  }
+
   noteMsg = note;
   notes[noteMsg] = false;
 
@@ -710,7 +816,6 @@ void updatesyncOff() {
     boardswitch.writePin(PB_OSC2, LOW);    // pb osc2 on
     boardswitch.writePin(SYNC, LOW);       // sync off
     boardswitch.writePin(SOFT_SYNC, LOW);  // soft sync off
-    boardswitch.writePin(HARD_SYNC, LOW);  // hard sync off
   }
 }
 
@@ -723,7 +828,6 @@ void updatesyncOn() {
     boardswitch.writePin(PB_OSC2, HIGH);    // pb osc2 on
     boardswitch.writePin(SYNC, HIGH);       // sync on
     boardswitch.writePin(SOFT_SYNC, HIGH);  // soft sync on
-    boardswitch.writePin(HARD_SYNC, HIGH);  // hard sync off
   }
 }
 
@@ -1125,14 +1229,18 @@ void turnOffOneandTwo() {
 }
 
 void updatebutton3() {
-  if (level2 == 1 && button3switch == 1) {
+  if (level2 == 1 && arpEnabled && arpPlaying ) {
+    showCurrentParameterPage("Arpeggiator", "Stop");
+    arpStop();
+  }
+  if (level2 && button3switch && !arpEnabled) {
     showCurrentParameterPage("VCF Vel", "On");
     vcfVelocity = 1;
     srpanel.set(BUTTON3_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCF_VELOCITY, HIGH);
   }
-  if (level2 == 1 && button3switch == 0) {
+  if (level2 && !button3switch && !arpEnabled) {
     showCurrentParameterPage("VCF Vel", "Off ");
     vcfVelocity = 0;
     srpanel.set(BUTTON3_LED, LOW);
@@ -1146,14 +1254,18 @@ void updatebutton3() {
 }
 
 void updatebutton4() {
-  if (level2 == 1 && button4switch == 1) {
+  if (level2 == 1 && arpEnabled && !arpPlaying ) {
+    showCurrentParameterPage("Arpeggiator", "Continue");
+    arpContinue();
+  }
+  if (level2 && button4switch && !arpEnabled) {
     showCurrentParameterPage("VCA Vel", "On");
     vcaVelocity = 1;
     srpanel.set(BUTTON4_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCA_VELOCITY, HIGH);
   }
-  if (level2 == 1 && button4switch == 0) {
+  if (level2 && !button4switch && !arpEnabled) {
     showCurrentParameterPage("VCA Vel", "Off ");
     vcaVelocity = 0;
     srpanel.set(BUTTON4_LED, LOW);
@@ -1251,9 +1363,19 @@ void updatebutton8() {
 }
 
 void updatebutton9() {
-  if (level2 == 1) {
-    showCurrentParameterPage("Level 2", "No Function");
+  if (level2 == 1 && button9switch == 1) {
+    showCurrentParameterPage("Arpeggiator", "On");
+    srpanel.set(BUTTON9_LED, HIGH);
+    arpEnable();
+  }
+  if (level2 == 1 && button9switch == 0) {
+    showCurrentParameterPage("Arpeggiator", "Off ");
+    srpanel.set(BUTTON9_LED, LOW);
     turnOffOneandTwo();
+    arpStop();
+    arpEnabled   = false;
+    arpRecording = false;
+    arpPlaying   = false;
   }
   if (level1 == 1) {
     patchNo = 9;
@@ -1371,7 +1493,7 @@ void updatevolume() {
 }
 
 void updatefilterRes() {
-  showCurrentParameterPage("Resonance", int(filterResstr));
+  showCurrentParameterPage("Emphasis", int(filterResstr));
 }
 
 void updatefilterLevel() {
@@ -1390,9 +1512,50 @@ void updateFilterCutoff() {
   showCurrentParameterPage("Cutoff", String(filterCutoffstr) + " Hz");
 }
 
+// void updateLfoRate() {
+//   showCurrentParameterPage("LFO Rate", String(LfoRatestr) + " Hz");
+//   arpStepMicros = (uint32_t)(1e6f / arpRateHz);
+//   arpGateMicros = arpStepMicros * 0.80f;
+
+//   // safety clamp
+//   arpGateMicros = constrain(arpGateMicros, 2000, arpStepMicros - 2000);
+
+// }
+
 void updateLfoRate() {
-  showCurrentParameterPage("LFO Rate", String(LfoRatestr) + " Hz");
+
+  // --- USER-TUNABLE LIMITS ---
+  const float minHz = 0.5f;
+  const float maxHz = 20.0f;
+
+  // Normalize 0–1024 → 0.0–1.0
+  float norm = (float)constrain(LfoRate, 0, 1024) / 1024.0f;
+
+  // Exponential mapping
+  float arpRateHz = minHz * powf(maxHz / minHz, norm);
+
+  // Convert to timing
+  arpStepMicros = (uint32_t)(1000000.0f / arpRateHz);
+  arpGateMicros = (uint32_t)((float)arpStepMicros * 0.80f);
+
+  // Safety clamp (typed + underflow-safe)
+  const uint32_t MIN_GATE_US = 2000UL;
+  const uint32_t MIN_GAP_US  = 2000UL;
+
+  uint32_t high = (arpStepMicros > (MIN_GATE_US + MIN_GAP_US))
+                ? (arpStepMicros - MIN_GAP_US)
+                : MIN_GATE_US;
+
+  arpGateMicros = constrain(arpGateMicros, MIN_GATE_US, high);
+
+  if (arpEnabled) {
+    showCurrentParameterPage("ARP Rate", String(arpRateHz, 2) + " Hz");
+  } else {
+    showCurrentParameterPage("LFO Rate", String(LfoRatestr) + " Hz");
+  }
 }
+
+
 
 void updatepwLFO() {
   showCurrentParameterPage("PWM Rate", String(pwLFOstr) + " Hz");
@@ -3036,6 +3199,7 @@ void loop() {
   stopClockPulse();
   stopTriggerPulse();
   checkEEProm();
+  arpEngine();
 }
 
 

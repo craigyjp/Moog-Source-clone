@@ -91,7 +91,7 @@ ADC *adc = new ADC();
 #define PB_OSC2 12
 #define SYNC 13
 #define SOFT_SYNC 14
-#define HARD_SYNC 15
+#define TUNE_ENABLE 15
 
 #define SH_TO_VCO 16
 #define SH_TO_VCF 17
@@ -100,7 +100,7 @@ ADC *adc = new ADC();
 #define VCF_LOG_LIN 20
 #define VCA_LOG_LIN 21
 #define VCA_VELOCITY 22
-#define SPARE_23 23
+#define VCO_SELECT 23
 
 
 // front panel Buttons

@@ -4,7 +4,7 @@
 //#define sclk 20 // SCLK can also use pin 14
 //#define mosi 21 // MOSI can also use pin 7
 #define cs 2    // CS & DC can use pins 2, 6, 9, 10, 15, 20, 21, 22, 23
-#define dc 3    //but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
+#define dc 18    //but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
 #define rst 8   // RST can use any pin
 #define DISPLAYTIMEOUT 1500
 

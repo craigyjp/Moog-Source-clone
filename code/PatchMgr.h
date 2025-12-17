@@ -18,7 +18,7 @@
   Holding Save for 1.5s will go into a patch deletion mode. Use encoder and enter button to choose and delete patch. Patch numbers will be changed on the SD card to be consecutive again.
 */
 //Agileware CircularBuffer available in libraries manager
-#include <CircularBuffer.h>
+#include <CircularBuffer.hpp>
 
 #define TOTALCHARS 63
 
