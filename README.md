@@ -9,6 +9,10 @@ VCAs are AS3364 quad VCA chips for the levels etc.
 Buttons are PB86-B1 in back from AliExpress
 PSU is a MeanWell RQ50-C quad PSU with +/-15 and +/- 5V supplies.
 
+I'm revisiting this project and adding more functions. So far I've updated the code for.
+
+* Arpeggiator
+
 How it sounds  https://youtu.be/6hMTac6jpIQ
 
 ![Synth](photos/synth.jpg)
