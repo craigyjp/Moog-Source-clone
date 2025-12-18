@@ -6,6 +6,11 @@ boolean encCW = true;//This is to set the encoder to increment when turned CW - 
 unsigned int CV =0;
 unsigned int velCV = 0;
 
+constexpr int POT_MAX = 1023;
+constexpr int DETUNE_END = POT_MAX / 4;
+
+int offset;
+
 int modWheelDepth = 0;
 int pitchBendRange = 0;
 int afterTouchDepth = 0;

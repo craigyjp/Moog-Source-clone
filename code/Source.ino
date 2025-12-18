@@ -229,12 +229,16 @@ String seqToCsv(const StepSeq &s) {
 
 void csvToSeq(StepSeq &s, String data[], int &idx, int totalFields) {
   // If not enough fields, leave sequence empty (backward compatibility)
-  if (idx >= totalFields) { s.length = 0; s.index = 0; return; }
+  if (idx >= totalFields) {
+    s.length = 0;
+    s.index = 0;
+    return;
+  }
 
   s.length = (uint8_t)constrain(data[idx++].toInt(), 0, SEQ_MAX_STEPS);
   for (int i = 0; i < SEQ_MAX_STEPS; i++) {
     if (idx < totalFields) s.steps[i] = (uint8_t)data[idx++].toInt();
-    else                  s.steps[i] = SEQ_REST;  // default if truncated
+    else s.steps[i] = SEQ_REST;  // default if truncated
   }
   s.index = 0;
 }
@@ -245,8 +249,12 @@ void clearSeq(StepSeq &s) {
   for (int i = 0; i < SEQ_MAX_STEPS; i++) s.steps[i] = SEQ_REST;
 }
 
-inline StepSeq& currentRecSeq() { return (recordTarget == 2) ? seq2 : seq1; }
-inline StepSeq& currentPlaySeq(){ return (playTarget   == 2) ? seq2 : seq1; }
+inline StepSeq &currentRecSeq() {
+  return (recordTarget == 2) ? seq2 : seq1;
+}
+inline StepSeq &currentPlaySeq() {
+  return (playTarget == 2) ? seq2 : seq1;
+}
 
 void seqResetRecord(uint8_t target) {
   recordTarget = target;
@@ -306,13 +314,13 @@ void seqToggleEnable() {
     arpPlaying = false;
     arpRecording = false;
 
-    seqStop();       // ensure gate is known
+    seqStop();  // ensure gate is known
     seqState = SEQ_IDLE;
   } else {
     seqStop();
     seqState = SEQ_IDLE;
     recordTarget = 0;
-    playTarget   = 0;
+    playTarget = 0;
   }
 }
 
@@ -333,7 +341,7 @@ void seqEngine() {
           digitalWrite(GATE_NOTE1, LOW);
           gatepulse = 0;
         } else {
-          commandNote(step); // uses your existing pitch+gate path
+          commandNote(step);  // uses your existing pitch+gate path
         }
 
         s.index = (s.index + 1) % s.length;
@@ -358,12 +366,12 @@ inline void arpGateOff() {
 }
 
 void arpEnable() {
-  arpEnabled   = true;
+  arpEnabled = true;
   arpRecording = true;
-  arpPlaying   = false;
+  arpPlaying = false;
 
   arpLength = 0;
-  arpIndex  = 0;
+  arpIndex = 0;
   firstNoteSet = false;
 
   arpGateOff();
@@ -761,7 +769,7 @@ void commandNote(int noteMsg) {
     digitalWrite(TRIG_NOTE1, HIGH);
     trigTimer = millis();
 
-    oldnote = noteMsg;   // establish baseline for multi-trigger comparisons
+    oldnote = noteMsg;  // establish baseline for multi-trigger comparisons
     return;
   }
 
@@ -781,7 +789,7 @@ void commandNote(int noteMsg) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
-// --- Sequencer owns keyboard when enabled ---
+  // --- Sequencer owns keyboard when enabled ---
   if (seqEnabled) {
     velCV = ((unsigned int)((float)velocity) * 24.43);
 
@@ -1159,7 +1167,7 @@ void updatelevel1() {
     showCurrentParameterPage("Level 1", "Selected");
     srpanel.set(LEVEL1_LED, HIGH);
     srpanel.set(LEVEL2_LED, LOW);
-    
+
     showPatchNumberButton();
   }
 }
@@ -1352,7 +1360,7 @@ void setPatchButton(int patchNo) {
 }
 
 void updatebutton1() {
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Seq 1", "Record");
     seqResetRecord(1);
   }
@@ -1378,7 +1386,7 @@ void updatebutton1() {
 }
 
 void updatebutton2() {
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Seq 2", "Record");
     seqResetRecord(2);
   }
@@ -1416,11 +1424,11 @@ void turnOffOneandTwo() {
 }
 
 void updatebutton3() {
-  if (level2 && arpEnabled && arpPlaying ) {
+  if (level2 && arpEnabled && arpPlaying) {
     showCurrentParameterPage("Arpeggiator", "Stop");
     arpStop();
   }
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Sequencer", "Stop");
     seqStop();
   }
@@ -1445,11 +1453,11 @@ void updatebutton3() {
 }
 
 void updatebutton4() {
-  if (level2 && arpEnabled && !arpPlaying ) {
+  if (level2 && arpEnabled && !arpPlaying) {
     showCurrentParameterPage("Arpeggiator", "Continue");
     arpContinue();
   }
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Sequencer", "Continue");
     seqContinue();
   }
@@ -1474,7 +1482,7 @@ void updatebutton4() {
 }
 
 void updatebutton5() {
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Seq 1", "Play");
     seqPlay(1);
   }
@@ -1499,7 +1507,7 @@ void updatebutton5() {
 }
 
 void updatebutton6() {
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Seq 2", "Play");
     seqPlay(2);
   }
@@ -1524,13 +1532,13 @@ void updatebutton6() {
 }
 
 void updatebutton7() {
-  if (level2 && seqEnabled ) {
+  if (level2 && seqEnabled) {
     showCurrentParameterPage("Insert", "Rest");
     if (seqState == SEQ_RECORDING) {
       seqInsertRest();
     }
   }
-  if (level2&& button7switch && !seqEnabled) {
+  if (level2 && button7switch && !seqEnabled) {
     showCurrentParameterPage("VCF Lin EG", "On");
     vcfLinear = 1;
     srpanel.set(BUTTON7_LED, HIGH);
@@ -1581,9 +1589,9 @@ void updatebutton9() {
     showCurrentParameterPage("Arpeggiator", "Off ");
     srpanel.set(BUTTON9_LED, LOW);
     arpStop();
-    arpEnabled   = false;
+    arpEnabled = false;
     arpRecording = false;
-    arpPlaying   = false;
+    arpPlaying = false;
   }
   if (level1) {
     patchNo = 9;
@@ -1749,11 +1757,11 @@ void updateLfoRate() {
 
   // Safety clamp (typed + underflow-safe)
   const uint32_t MIN_GATE_US = 2000UL;
-  const uint32_t MIN_GAP_US  = 2000UL;
+  const uint32_t MIN_GAP_US = 2000UL;
 
   uint32_t high = (stepMicros > (MIN_GATE_US + MIN_GAP_US))
-                ? (stepMicros - MIN_GAP_US)
-                : MIN_GATE_US;
+                    ? (stepMicros - MIN_GAP_US)
+                    : MIN_GATE_US;
 
   gateMicros = constrain(gateMicros, MIN_GATE_US, high);
 
@@ -1788,7 +1796,12 @@ void updateosc1level() {
 }
 
 void updateosc2interval() {
-  showCurrentParameterPage("OSC2 Interval", int(osc2intervalstr));
+  Serial.println(osc2interval);
+  if (osc2interval >= 256) {
+    showCurrentParameterPage("OSC2 Interval", String(osc2intervalstr) + " Semitones");
+  } else {
+    showCurrentParameterPage("OSC2 Interval", String(osc2intervalstr) + " Cents");
+  }
 }
 
 void updateosc1PW() {
@@ -2502,7 +2515,11 @@ void myControlChange(byte channel, byte control, int value) {
       break;
 
     case CCosc2interval:
-      osc2intervalstr = INTERVAL[value / 8];
+      if (value >= 256) {
+        osc2intervalstr = INTERVAL[value / 8];
+      } else {
+        osc2intervalstr = INTERVALSEMI[value / 8];
+      }
       osc2interval = value;
       updateosc2interval();
       break;
@@ -2714,15 +2731,16 @@ void setCurrentPatchData(String data[], int fields) {
 
 String getCurrentPatchData() {
   return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri)
-  + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(singleswitch)
-  + "," + String(multiswitch) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch)
-  + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate)
-  + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM)
-  + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack)
-  + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel)
-  + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity)
-  + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth)
-  + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth) + "," + seqToCsv(seq1) + "," + seqToCsv(seq2);;
+         + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(singleswitch)
+         + "," + String(multiswitch) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch)
+         + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate)
+         + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM)
+         + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack)
+         + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel)
+         + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity)
+         + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth)
+         + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth) + "," + seqToCsv(seq1) + "," + seqToCsv(seq2);
+  ;
 }
 
 void checkMux() {
@@ -2874,11 +2892,17 @@ void writeDemux() {
       break;
     case 11:
       // 0-2V
-      if (osc2interval < 9) {
-        setVoltage(DAC_NOTE1, 0, 1, 0);
+      if (osc2interval <= DETUNE_END) {
+        // 0..25%: fine steps 0..(say) 40 units
+        float t = (float)osc2interval / (float)DETUNE_END;
+        t = t * t;                        // optional
+        offset = (int)roundf(t * 40.0f);  // 40 is your fine range in DAC units
       } else {
-        setVoltage(DAC_NOTE1, 0, 1, int(osc2interval * 2));
+        // 25..100%: your old mapping, rescaled to start at 0 at the boundary
+        float t = (float)(osc2interval - DETUNE_END) / (float)(POT_MAX - DETUNE_END);
+        offset = (int)roundf(t * (POT_MAX * 2));  // roughly matches old *2 top end
       }
+      setVoltage(DAC_NOTE1, 0, 1, offset);
       // 10 Volt
       setVoltage(DAC_NOTE1, 1, 1, int(glide * 1.9));
       break;
@@ -3447,7 +3471,7 @@ void loop() {
   stopClockPulse();
   stopTriggerPulse();
   checkEEProm();
-  
+
   // Timing engines last; only one should own the gate at a time
   if (seqEnabled) {
     seqEngine();
