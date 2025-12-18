@@ -15,6 +15,7 @@ I'm revisiting this project and adding more functions. So far I've updated the c
 * Arpeggiator 24 notes similar to original source in operation
 * 2x 64 note step sequencers
 * Sequencers stored to each patch
+* Refined the interval control to be a fine tune upto 31 cents for the first quarter turn, after that its semitones to 2 octaves.
 
 How it sounds  https://youtu.be/6hMTac6jpIQ
 
