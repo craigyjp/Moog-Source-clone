@@ -216,6 +216,113 @@ void setup() {
   recallPatch(patchNo);  //Load first patch
 }
 
+inline StepSeq& currentRecSeq() { return (recordTarget == 2) ? seq2 : seq1; }
+inline StepSeq& currentPlaySeq(){ return (playTarget   == 2) ? seq2 : seq1; }
+
+void seqResetRecord(uint8_t target) {
+  recordTarget = target;
+  seqState = SEQ_RECORDING;
+  StepSeq &s = currentRecSeq();
+  s.length = 0;
+  s.index = 0;
+  digitalWrite(GATE_NOTE1, LOW);
+  gatepulse = 0;
+}
+
+void seqAppendStep(uint8_t value) {
+  if (seqState != SEQ_RECORDING || recordTarget == 0) return;
+  StepSeq &s = currentRecSeq();
+  if (s.length >= SEQ_MAX_STEPS) return;
+  s.steps[s.length++] = value;
+}
+
+void seqInsertRest() {
+  seqAppendStep(SEQ_REST);
+  digitalWrite(GATE_NOTE1, LOW);
+  gatepulse = 0;
+}
+
+void seqStop() {
+  seqState = SEQ_STOPPED;
+  digitalWrite(GATE_NOTE1, LOW);
+  gatepulse = 0;
+}
+
+void seqPlay(uint8_t target) {
+  playTarget = target;
+  StepSeq &s = currentPlaySeq();
+  if (s.length == 0) return;
+
+  seqState = SEQ_PLAYING;
+  seqPhase = SEQ_GATE_OFF;
+  seqTimer = 0;
+  // leave s.index as-is to "continue where stopped"
+}
+
+void seqContinue() {
+  if (playTarget == 0) return;
+  StepSeq &s = currentPlaySeq();
+  if (s.length == 0) return;
+
+  seqState = SEQ_PLAYING;
+  seqPhase = SEQ_GATE_OFF;
+  seqTimer = 0;
+}
+
+void seqToggleEnable() {
+
+  if (seqEnabled) {
+    // Prevent simultaneous ownership
+    arpEnabled = false;
+    arpPlaying = false;
+    arpRecording = false;
+
+    seqStop();       // ensure gate is known
+    seqState = SEQ_IDLE;
+  } else {
+    seqStop();
+    seqState = SEQ_IDLE;
+    recordTarget = 0;
+    playTarget   = 0;
+  }
+}
+
+void seqEngine() {
+  if (seqState != SEQ_PLAYING || playTarget == 0) return;
+
+  StepSeq &s = currentPlaySeq();
+
+  switch (seqPhase) {
+
+    case SEQ_GATE_OFF:
+      if (seqTimer >= (seqStepMicros - seqGateMicros)) {
+        seqTimer = 0;
+
+        uint8_t step = s.steps[s.index];
+
+        if (step == SEQ_REST) {
+          digitalWrite(GATE_NOTE1, LOW);
+          gatepulse = 0;
+        } else {
+          commandNote(step); // uses your existing pitch+gate path
+        }
+
+        s.index = (s.index + 1) % s.length;
+        seqPhase = SEQ_GATE_ON;
+      }
+      break;
+
+    case SEQ_GATE_ON:
+      if (seqTimer >= seqGateMicros) {
+        digitalWrite(GATE_NOTE1, LOW);
+        gatepulse = 0;
+        seqTimer = 0;
+        seqPhase = SEQ_GATE_OFF;
+      }
+      break;
+  }
+}
+
 inline void arpGateOff() {
   digitalWrite(GATE_NOTE1, LOW);
   gatepulse = 0;
@@ -645,10 +752,35 @@ void commandNote(int noteMsg) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
+// --- Sequencer owns keyboard when enabled ---
+  if (seqEnabled) {
+    velCV = ((unsigned int)((float)velocity) * 24.43);
+
+    if (seqState == SEQ_RECORDING) {
+      // AUDITION
+      commandNote(note);
+
+      // RECORD
+      seqAppendStep(note);
+    }
+    return;
+  }
+
+  // --- Arp owns keyboard when enabled ---
   if (arpEnabled) {
     velCV = ((unsigned int)((float)velocity) * 24.43);
-    arpNoteInput(note);
-    return;   // swallow MIDI note
+
+    if (arpRecording) {
+      // AUDITION
+      commandNote(note);
+
+      // RECORD / close-loop logic
+      arpNoteInput(note);
+    } else {
+      // PLAYING or STOPPED: any key resets to record (your existing behavior)
+      arpNoteInput(note);
+    }
+    return;
   }
 
   noteMsg = note;
@@ -678,8 +810,22 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 
 void myNoteOff(byte channel, byte note, byte velocity) {
 
+  // Sequencer enabled: only honor NoteOff during RECORDING (audition release)
+  if (seqEnabled) {
+    if (seqState == SEQ_RECORDING) {
+      digitalWrite(GATE_NOTE1, LOW);
+      gatepulse = 0;
+    }
+    return;
+  }
+
+  // Arp enabled: only honor NoteOff during RECORDING (audition release)
   if (arpEnabled) {
-    return;   // arp owns gate timing
+    if (arpRecording) {
+      digitalWrite(GATE_NOTE1, LOW);
+      gatepulse = 0;
+    }
+    return;
   }
 
   noteMsg = note;
@@ -1173,7 +1319,11 @@ void setPatchButton(int patchNo) {
 }
 
 void updatebutton1() {
-  if (level2 == 1 && button1switch == 1) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Seq 1", "Record");
+    seqResetRecord(1);
+  }
+  if (level2 && button1switch && !seqEnabled) {
     srpanel.set(BUTTON1_LED, HIGH);
     srpanel.set(BUTTON2_LED, LOW);
     button2switch = 0;
@@ -1184,7 +1334,7 @@ void updatebutton1() {
     settings::increment_setting();
     showSettingsPage();
   }
-  if (level2 == 1 && button1switch == 0) {
+  if (level2 && !button1switch && !seqEnabled) {
     srpanel.set(BUTTON1_LED, LOW);
     state = PARAMETER;
   }
@@ -1195,7 +1345,11 @@ void updatebutton1() {
 }
 
 void updatebutton2() {
-  if (level2 == 1 && button2switch == 1) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Seq 2", "Record");
+    seqResetRecord(2);
+  }
+  if (level2 && button2switch && !seqEnabled) {
     srpanel.set(BUTTON2_LED, HIGH);
     srpanel.set(BUTTON1_LED, LOW);
     button1switch = 0;
@@ -1207,11 +1361,11 @@ void updatebutton2() {
     settings::increment_setting();
     showSettingsPage();
   }
-  if (level2 == 1 && button2switch == 0) {
+  if (level2 && !button2switch && !seqEnabled) {
     srpanel.set(BUTTON2_LED, LOW);
     state = PARAMETER;
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 2;
     setPatchButton(patchNo);
   }
@@ -1229,18 +1383,22 @@ void turnOffOneandTwo() {
 }
 
 void updatebutton3() {
-  if (level2 == 1 && arpEnabled && arpPlaying ) {
+  if (level2 && arpEnabled && arpPlaying ) {
     showCurrentParameterPage("Arpeggiator", "Stop");
     arpStop();
   }
-  if (level2 && button3switch && !arpEnabled) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Sequencer", "Stop");
+    seqStop();
+  }
+  if (level2 && button3switch && !arpEnabled && !seqEnabled) {
     showCurrentParameterPage("VCF Vel", "On");
     vcfVelocity = 1;
     srpanel.set(BUTTON3_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCF_VELOCITY, HIGH);
   }
-  if (level2 && !button3switch && !arpEnabled) {
+  if (level2 && !button3switch && !arpEnabled && !seqEnabled) {
     showCurrentParameterPage("VCF Vel", "Off ");
     vcfVelocity = 0;
     srpanel.set(BUTTON3_LED, LOW);
@@ -1258,14 +1416,18 @@ void updatebutton4() {
     showCurrentParameterPage("Arpeggiator", "Continue");
     arpContinue();
   }
-  if (level2 && button4switch && !arpEnabled) {
+  if (level2 == 1 && seqEnabled ) {
+    showCurrentParameterPage("Sequencer", "Continue");
+    seqContinue();
+  }
+  if (level2 && button4switch && !arpEnabled && !seqEnabled) {
     showCurrentParameterPage("VCA Vel", "On");
     vcaVelocity = 1;
     srpanel.set(BUTTON4_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCA_VELOCITY, HIGH);
   }
-  if (level2 && !button4switch && !arpEnabled) {
+  if (level2 && !button4switch && !arpEnabled && !seqEnabled) {
     showCurrentParameterPage("VCA Vel", "Off ");
     vcaVelocity = 0;
     srpanel.set(BUTTON4_LED, LOW);
@@ -1279,14 +1441,18 @@ void updatebutton4() {
 }
 
 void updatebutton5() {
-  if (level2 == 1 && button5switch == 1) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Seq 1", "Play");
+    seqPlay(1);
+  }
+  if (level2 && button5switch && !seqEnabled) {
     showCurrentParameterPage("VCF Loop", "On");
     vcfLoop = 1;
     srpanel.set(BUTTON5_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCF_LOOP, HIGH);
   }
-  if (level2 == 1 && button5switch == 0) {
+  if (level2 && !button5switch && !seqEnabled) {
     showCurrentParameterPage("VCF Loop", "Off ");
     vcfLoop = 0;
     srpanel.set(BUTTON5_LED, LOW);
@@ -1300,14 +1466,18 @@ void updatebutton5() {
 }
 
 void updatebutton6() {
-  if (level2 == 1 && button6switch == 1) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Seq 2", "Play");
+    seqPlay(2);
+  }
+  if (level2 && button6switch && !seqEnabled) {
     showCurrentParameterPage("VCA Loop", "On");
     vcaLoop = 1;
     srpanel.set(BUTTON6_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCA_LOOP, HIGH);
   }
-  if (level2 == 1 && button6switch == 0) {
+  if (level2 && !button6switch && !seqEnabled) {
     showCurrentParameterPage("VCA Loop", "Off ");
     vcaLoop = 0;
     srpanel.set(BUTTON6_LED, LOW);
@@ -1321,14 +1491,20 @@ void updatebutton6() {
 }
 
 void updatebutton7() {
-  if (level2 == 1 && button7switch == 1) {
+  if (level2 && seqEnabled ) {
+    showCurrentParameterPage("Insert", "Rest");
+    if (seqState == SEQ_RECORDING) {
+      seqInsertRest();
+    }
+  }
+  if (level2&& button7switch && !seqEnabled) {
     showCurrentParameterPage("VCF Lin EG", "On");
     vcfLinear = 1;
     srpanel.set(BUTTON7_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCF_LOG_LIN, HIGH);
   }
-  if (level2 == 1 && button7switch == 0) {
+  if (level2 && !button7switch && !seqEnabled) {
     showCurrentParameterPage("VCF Lin EG", "Off ");
     vcfLinear = 0;
     srpanel.set(BUTTON7_LED, LOW);
@@ -1371,7 +1547,6 @@ void updatebutton9() {
   if (level2 == 1 && button9switch == 0) {
     showCurrentParameterPage("Arpeggiator", "Off ");
     srpanel.set(BUTTON9_LED, LOW);
-    turnOffOneandTwo();
     arpStop();
     arpEnabled   = false;
     arpRecording = false;
@@ -1456,9 +1631,18 @@ void updatebutton13() {
 }
 
 void updatebutton14() {
-  if (level2 == 1) {
-    showCurrentParameterPage("Level 2", "No Function");
-    turnOffOneandTwo();
+  if (level2 && button14switch) {
+    showCurrentParameterPage("Sequencer", "On");
+    srpanel.set(BUTTON14_LED, HIGH);
+    seqEnabled = true;
+    seqToggleEnable();
+  }
+  if (level2 && !button14switch) {
+    showCurrentParameterPage("Sequencer", "Off ");
+    srpanel.set(BUTTON14_LED, LOW);
+    seqStop();
+    seqEnabled = false;
+    seqToggleEnable();
   }
   if (level1 == 1) {
     patchNo = 14;
@@ -1512,16 +1696,6 @@ void updateFilterCutoff() {
   showCurrentParameterPage("Cutoff", String(filterCutoffstr) + " Hz");
 }
 
-// void updateLfoRate() {
-//   showCurrentParameterPage("LFO Rate", String(LfoRatestr) + " Hz");
-//   arpStepMicros = (uint32_t)(1e6f / arpRateHz);
-//   arpGateMicros = arpStepMicros * 0.80f;
-
-//   // safety clamp
-//   arpGateMicros = constrain(arpGateMicros, 2000, arpStepMicros - 2000);
-
-// }
-
 void updateLfoRate() {
 
   // --- USER-TUNABLE LIMITS ---
@@ -1531,31 +1705,42 @@ void updateLfoRate() {
   // Normalize 0–1024 → 0.0–1.0
   float norm = (float)constrain(LfoRate, 0, 1024) / 1024.0f;
 
-  // Exponential mapping
-  float arpRateHz = minHz * powf(maxHz / minHz, norm);
+  // Exponential mapping (one rate drives both ARP + SEQ)
+  float rateHz = minHz * powf(maxHz / minHz, norm);
 
-  // Convert to timing
-  arpStepMicros = (uint32_t)(1000000.0f / arpRateHz);
-  arpGateMicros = (uint32_t)((float)arpStepMicros * 0.80f);
+  // Convert to step timing
+  uint32_t stepMicros = (uint32_t)(1000000.0f / rateHz);
+
+  // Compute 80% duty gate
+  uint32_t gateMicros = (uint32_t)((float)stepMicros * 0.80f);
 
   // Safety clamp (typed + underflow-safe)
   const uint32_t MIN_GATE_US = 2000UL;
   const uint32_t MIN_GAP_US  = 2000UL;
 
-  uint32_t high = (arpStepMicros > (MIN_GATE_US + MIN_GAP_US))
-                ? (arpStepMicros - MIN_GAP_US)
+  uint32_t high = (stepMicros > (MIN_GATE_US + MIN_GAP_US))
+                ? (stepMicros - MIN_GAP_US)
                 : MIN_GATE_US;
 
-  arpGateMicros = constrain(arpGateMicros, MIN_GATE_US, high);
+  gateMicros = constrain(gateMicros, MIN_GATE_US, high);
 
+  // Apply to ARP
+  arpStepMicros = stepMicros;
+  arpGateMicros = gateMicros;
+
+  // Apply to Sequencer
+  seqStepMicros = stepMicros;
+  seqGateMicros = gateMicros;
+
+  // Display priority: ARP, then SEQ, else LFO
   if (arpEnabled) {
-    showCurrentParameterPage("ARP Rate", String(arpRateHz, 2) + " Hz");
+    showCurrentParameterPage("ARP Rate", String(rateHz, 2) + " Hz");
+  } else if (seqEnabled) {
+    showCurrentParameterPage("SEQ Rate", String(rateHz, 2) + " Hz");
   } else {
     showCurrentParameterPage("LFO Rate", String(LfoRatestr) + " Hz");
   }
 }
-
-
 
 void updatepwLFO() {
   showCurrentParameterPage("PWM Rate", String(pwLFOstr) + " Hz");
@@ -3199,7 +3384,13 @@ void loop() {
   stopClockPulse();
   stopTriggerPulse();
   checkEEProm();
-  arpEngine();
+  
+  // Timing engines last; only one should own the gate at a time
+  if (seqEnabled) {
+    seqEngine();
+  } else if (arpEnabled) {
+    arpEngine();
+  }
 }
 
 

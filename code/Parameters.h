@@ -42,6 +42,33 @@ enum ArpPhase {
 
 ArpPhase arpPhase = ARP_GATE_OFF;
 
+constexpr uint8_t SEQ_MAX_STEPS = 64;
+constexpr uint8_t SEQ_REST = 255;
+
+struct StepSeq {
+  uint8_t steps[SEQ_MAX_STEPS];
+  uint8_t length = 0;      // number of recorded steps
+  uint8_t index  = 0;      // playback position
+};
+
+StepSeq seq1, seq2;
+
+bool seqEnabled = false;
+
+enum SeqRunState { SEQ_IDLE, SEQ_RECORDING, SEQ_PLAYING, SEQ_STOPPED };
+SeqRunState seqState = SEQ_IDLE;
+
+uint8_t recordTarget = 0;     // 0 = none, 1 = seq1, 2 = seq2
+uint8_t playTarget   = 0;     // 0 = none, 1 = seq1, 2 = seq2
+
+elapsedMicros seqTimer;
+
+uint32_t seqStepMicros = 250000;
+uint32_t seqGateMicros = 200000;
+
+enum SeqPhase { SEQ_GATE_OFF, SEQ_GATE_ON };
+SeqPhase seqPhase = SEQ_GATE_OFF;
+
 int noiseLevel = 0;
 int noiseLevelstr = 0; // for display
 int glide = 0;
