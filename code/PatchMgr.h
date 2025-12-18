@@ -56,36 +56,60 @@ size_t readField(File *file, char *str, size_t size, const char *delim)
   return n;
 }
 
-void recallPatchData(File patchFile, String data[])
+int recallPatchData(File &patchFile, String data[])
 {
-  //Read patch data from file and set current patch parameters
-  size_t n;     // Length of returned field with delimiter.
-  char str[20]; // Must hold longest field with delimiter and zero byte.
+  size_t n;      // Length of returned field with delimiter.
+  char str[20];  // Must hold longest field with delimiter and zero byte.
   int i = 0;
+
   while (patchFile.available() && i < NO_OF_PARAMS)
   {
     n = readField(&patchFile, str, sizeof(str), ",\n");
-    // done if Error or at EOF.
-    if (n == 0)
-      break;
-    // Print the type of delimiter.
-    if (str[n - 1] == ',' || str[n - 1] == '\n')
-    {
-      // Remove the delimiter.
-      str[n - 1] = 0;
-    }
-    else
-    {
-      // At eof, too long, or read error.  Too long is error.
+
+    if (n == 0) break;  // error or EOF
+
+    if (str[n - 1] == ',' || str[n - 1] == '\n') {
+      str[n - 1] = 0;   // strip delimiter
+    } else {
       Serial.print(patchFile.available() ? F("error: ") : F("eof:   "));
     }
-    // Print the field.
-    //    Serial.print(i);
-    //    Serial.print(" - ");
-    //    Serial.println(str);
+
     data[i++] = String(str);
   }
+
+  return i; // <-- number of fields read
 }
+
+// void recallPatchData(File patchFile, String data[])
+// {
+//   //Read patch data from file and set current patch parameters
+//   size_t n;     // Length of returned field with delimiter.
+//   char str[20]; // Must hold longest field with delimiter and zero byte.
+//   int i = 0;
+//   while (patchFile.available() && i < NO_OF_PARAMS)
+//   {
+//     n = readField(&patchFile, str, sizeof(str), ",\n");
+//     // done if Error or at EOF.
+//     if (n == 0)
+//       break;
+//     // Print the type of delimiter.
+//     if (str[n - 1] == ',' || str[n - 1] == '\n')
+//     {
+//       // Remove the delimiter.
+//       str[n - 1] = 0;
+//     }
+//     else
+//     {
+//       // At eof, too long, or read error.  Too long is error.
+//       Serial.print(patchFile.available() ? F("error: ") : F("eof:   "));
+//     }
+//     // Print the field.
+//     //    Serial.print(i);
+//     //    Serial.print(" - ");
+//     //    Serial.println(str);
+//     data[i++] = String(str);
+//   }
+// }
 
 int compare(const void *a, const void *b) {
   return ((PatchNoAndName*)a)->patchNo - ((PatchNoAndName*)b)->patchNo;

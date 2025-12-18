@@ -216,6 +216,35 @@ void setup() {
   recallPatch(patchNo);  //Load first patch
 }
 
+String seqToCsv(const StepSeq &s) {
+  String out;
+  out.reserve(4 + SEQ_MAX_STEPS * 4);
+  out += String(s.length);
+  for (int i = 0; i < SEQ_MAX_STEPS; i++) {
+    out += ",";
+    out += String((int)s.steps[i]);
+  }
+  return out;
+}
+
+void csvToSeq(StepSeq &s, String data[], int &idx, int totalFields) {
+  // If not enough fields, leave sequence empty (backward compatibility)
+  if (idx >= totalFields) { s.length = 0; s.index = 0; return; }
+
+  s.length = (uint8_t)constrain(data[idx++].toInt(), 0, SEQ_MAX_STEPS);
+  for (int i = 0; i < SEQ_MAX_STEPS; i++) {
+    if (idx < totalFields) s.steps[i] = (uint8_t)data[idx++].toInt();
+    else                  s.steps[i] = SEQ_REST;  // default if truncated
+  }
+  s.index = 0;
+}
+
+void clearSeq(StepSeq &s) {
+  s.length = 0;
+  s.index = 0;
+  for (int i = 0; i < SEQ_MAX_STEPS; i++) s.steps[i] = SEQ_REST;
+}
+
 inline StepSeq& currentRecSeq() { return (recordTarget == 2) ? seq2 : seq1; }
 inline StepSeq& currentPlaySeq(){ return (playTarget   == 2) ? seq2 : seq1; }
 
@@ -2535,21 +2564,25 @@ void myProgramChange(byte channel, byte program) {
 
 void recallPatch(int patchNo) {
   allNotesOff();
+
   File patchFile = SD.open(String(patchNo).c_str());
   if (!patchFile) {
     Serial.println("File not found");
-  } else {
-    String data[NO_OF_PARAMS];  //Array of data read in
-    recallPatchData(patchFile, data);
-    setCurrentPatchData(data);
-    patchFile.close();
-    storeLastPatch(patchNo);
-    showPatchNumberButton();
-    updatelevel2();
+    return;
   }
+
+  String data[NO_OF_PARAMS];  // NO_OF_PARAMS must be >= 196 for seq support
+  int fields = recallPatchData(patchFile, data);
+  patchFile.close();
+
+  setCurrentPatchData(data, fields);
+
+  storeLastPatch(patchNo);
+  showPatchNumberButton();
+  updatelevel2();
 }
 
-void setCurrentPatchData(String data[]) {
+void setCurrentPatchData(String data[], int fields) {
   patchName = data[0];
   noiseLevel = data[1].toInt();
   glide = data[2].toInt();
@@ -2617,6 +2650,13 @@ void setCurrentPatchData(String data[]) {
   clocksource = data[64].toInt();
   afterTouchDepth = data[65].toInt();
 
+  // AfterTouch is data[65]
+  int idx = 66;  // next field after your existing patch params
+
+  // Optional sequencer data (backward compatible)
+  csvToSeq(seq1, data, idx, fields);
+  csvToSeq(seq2, data, idx, fields);
+
   //Switches
   updateosc1_32();
   updateosc1_16();
@@ -2661,7 +2701,16 @@ void setCurrentPatchData(String data[]) {
 }
 
 String getCurrentPatchData() {
-  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri) + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(singleswitch) + "," + String(multiswitch) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch) + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate) + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel) + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity) + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth);
+  return patchName + "," + String(noiseLevel) + "," + String(glide) + "," + String(osc1_32) + "," + String(osc1_16) + "," + String(osc1_8) + "," + String(osc1_saw) + "," + String(osc1_tri)
+  + "," + String(osc1_pulse) + "," + String(osc2_32) + "," + String(osc2_16) + "," + String(osc2_8) + "," + String(osc2_saw) + "," + String(osc2_tri) + "," + String(osc2_pulse) + "," + String(singleswitch)
+  + "," + String(multiswitch) + "," + String(lfoTriangle) + "," + String(lfoSquare) + "," + String(lfoOscOffswitch) + "," + String(lfoOscOnswitch) + "," + String(lfoVCFOffswitch)
+  + "," + String(lfoVCFOnswitch) + "," + String(syncOff) + "," + String(syncOn) + "," + String(kbOff) + "," + String(kbHalf) + "," + String(kbFull) + "," + String(LfoRate)
+  + "," + String(pwLFO) + "," + String(osc1level) + "," + String(osc2level) + "," + String(osc1PW) + "," + String(osc2PW) + "," + String(osc1PWM) + "," + String(osc2PWM)
+  + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(osc2interval) + "," + String(filterAttack)
+  + "," + String(filterDecay) + "," + String(filterSustain) + "," + String(filterRelease) + "," + String(filterRes) + "," + String(filterCutoff) + "," + String(filterLevel)
+  + "," + String(osc1foot) + "," + String(osc2foot) + "," + String(octave0) + "," + String(octave1) + "," + String(shvco) + "," + String(shvcf) + "," + String(vcfVelocity)
+  + "," + String(vcaVelocity) + "," + String(vcfLoop) + "," + String(vcaLoop) + "," + String(vcfLinear) + "," + String(vcaLinear) + "," + String(keyMode) + "," + String(modWheelDepth)
+  + "," + String(pitchBendRange) + "," + String(volume) + "," + String(clocksource) + "," + String(afterTouchDepth) + "," + seqToCsv(seq1) + "," + seqToCsv(seq2);;
 }
 
 void checkMux() {
