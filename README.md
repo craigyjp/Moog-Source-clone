@@ -14,6 +14,7 @@ I'm revisiting this project and adding more functions. So far I've updated the c
 
 * Arpeggiator 24 notes similar to original source in operation
 * 2x 64 note step sequencers
+* Sequencers stored to each patch
 
 How it sounds  https://youtu.be/6hMTac6jpIQ
 
