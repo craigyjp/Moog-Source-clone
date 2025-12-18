@@ -1,4 +1,5 @@
 # Moog-Source-clone
+
 Teensy 3.6 Moog Source based mono synth with MIDI and USBhost
 This synth was inspired by the Moog Source of the 80's.
 CEM chips for the VCO's as I dont have an autotune routine.
@@ -11,7 +12,8 @@ PSU is a MeanWell RQ50-C quad PSU with +/-15 and +/- 5V supplies.
 
 I'm revisiting this project and adding more functions. So far I've updated the code for.
 
-* Arpeggiator
+* Arpeggiator 24 notes similar to original source in operation
+* 2x 64 note step sequencers
 
 How it sounds  https://youtu.be/6hMTac6jpIQ
 
