@@ -746,36 +746,36 @@ void commandLastNote() {
 
 void commandNote(int noteMsg) {
 
-  CV = (unsigned int)((float)(noteMsg + transpose + realoctave) * NOTE_SF * 1.0 + 0.5);
-
+  // Pitch CV
+  CV = (unsigned int)((float)(noteMsg + transpose + realoctave) * NOTE_SF + 0.5f);
   analogWrite(A21, CV);
   analogWrite(A22, velCV);
 
+  // If gate is currently OFF, start a new note (both modes)
+  if (!gatepulse) {
 
-
-  if (gatepulse == 0 && multiswitch == 0) {
+    // Gate first, then trigger pulse
+    digitalWrite(GATE_NOTE1, HIGH);
+    gatepulse = true;
 
     digitalWrite(TRIG_NOTE1, HIGH);
     trigTimer = millis();
-    digitalWrite(GATE_NOTE1, HIGH);
-    gatepulse = 1;
+
+    oldnote = noteMsg;   // establish baseline for multi-trigger comparisons
+    return;
   }
 
-  if (gatepulse == 0 && multiswitch == 1) {
-
-    digitalWrite(TRIG_NOTE1, HIGH);
-    trigTimer = millis();
-    digitalWrite(GATE_NOTE1, HIGH);
-    gatepulse = 1;
-  }
-
-  if (gatepulse == 1 && multiswitch == 1) {
+  // Gate is already ON here: legato case
+  if (multiswitch) {
+    // Multi-trigger: retrigger envelope when the pitch changes
     if (oldnote != noteMsg) {
       digitalWrite(TRIG_NOTE1, HIGH);
       trigTimer = millis();
+      oldnote = noteMsg;
     }
-    oldnote = noteMsg;
   }
+
+  // Single-trigger: do nothing while gate is high (no retrigger)
 }
 
 
@@ -890,7 +890,7 @@ void firstNoteOff() {
 }
 
 void updateosc1_32() {
-  if (osc1_32 == 1) {
+  if (osc1_32) {
     showCurrentParameterPage("Osc1 Footage", "32 Foot");
     osc1foot = 0;
     srpanel.set(OSC1_32_LED, HIGH);  // LED on
@@ -900,7 +900,7 @@ void updateosc1_32() {
 }
 
 void updateosc1_16() {
-  if (osc1_16 == 1) {
+  if (osc1_16) {
     showCurrentParameterPage("Osc1 Footage", "16 Foot");
     osc1foot = 2012;
     srpanel.set(OSC1_32_LED, LOW);   // LED on
@@ -910,7 +910,7 @@ void updateosc1_16() {
 }
 
 void updateosc1_8() {
-  if (osc1_8 == 1) {
+  if (osc1_8) {
     showCurrentParameterPage("Osc1 Footage", "8 Foot");
     osc1foot = 4024;
     srpanel.set(OSC1_32_LED, LOW);  // LED on
@@ -920,7 +920,7 @@ void updateosc1_8() {
 }
 
 void updateosc1_saw() {
-  if (osc1_saw == 1) {
+  if (osc1_saw) {
     showCurrentParameterPage("Osc1 Wave", "Sawtooth");
     srpanel.set(OSC1_SAW_LED, HIGH);
     srpanel.set(OSC1_TRI_LED, LOW);
@@ -931,7 +931,7 @@ void updateosc1_saw() {
 }
 
 void updateosc1_tri() {
-  if (osc1_tri == 1) {
+  if (osc1_tri) {
     showCurrentParameterPage("Osc1 Wave", "Triangle");
     srpanel.set(OSC1_SAW_LED, LOW);   // LED on
     srpanel.set(OSC1_TRI_LED, HIGH);  // LED off
@@ -942,7 +942,7 @@ void updateosc1_tri() {
 }
 
 void updateosc1_pulse() {
-  if (osc1_pulse == 1) {
+  if (osc1_pulse) {
     showCurrentParameterPage("Osc1 Wave", "Pulse");
     srpanel.set(OSC1_SAW_LED, LOW);  // LED on
     srpanel.set(OSC1_TRI_LED, LOW);  // LED off
@@ -953,7 +953,7 @@ void updateosc1_pulse() {
 }
 
 void updatemulti() {
-  if (multiswitch == 1) {
+  if (multiswitch) {
     showCurrentParameterPage("Multi Trigger", "On");
     srpanel.set(MULTIPLE_TRIG_LED, HIGH);  // LED on
     srpanel.set(SINGLE_TRIG_LED, LOW);     // LED off
@@ -965,7 +965,7 @@ void updatemulti() {
 }
 
 void updatelfoTriangle() {
-  if (lfoTriangle == 1) {
+  if (lfoTriangle) {
     showCurrentParameterPage("LFO Waveform", "Triangle");
     LfoWave = 400;
     srpanel.set(LFO_TRIANGLE_LED, HIGH);  // LED on
@@ -974,7 +974,7 @@ void updatelfoTriangle() {
 }
 
 void updatelfoSquare() {
-  if (lfoSquare == 1) {
+  if (lfoSquare) {
     showCurrentParameterPage("LFO Waveform", "Square");
     LfoWave = 300;
     srpanel.set(LFO_TRIANGLE_LED, LOW);
@@ -983,7 +983,7 @@ void updatelfoSquare() {
 }
 
 void updatesyncOff() {
-  if (syncOff == 1) {
+  if (syncOff) {
     showCurrentParameterPage("Oscillator Sync", "Off");
     srpanel.set(SYNC_OFF_LED, HIGH);
     srpanel.set(SYNC_ON_LED, LOW);
@@ -995,7 +995,7 @@ void updatesyncOff() {
 }
 
 void updatesyncOn() {
-  if (syncOn == 1) {
+  if (syncOn) {
     showCurrentParameterPage("Oscillator Sync", "On");
     srpanel.set(SYNC_OFF_LED, LOW);
     srpanel.set(SYNC_ON_LED, HIGH);
@@ -1007,7 +1007,7 @@ void updatesyncOn() {
 }
 
 void updateoctave0() {
-  if (octave0 == 1) {
+  if (octave0) {
     showCurrentParameterPage("KBD Octave", "0");
     srpanel.set(OCTAVE_0_LED, HIGH);
     srpanel.set(OCTAVE_1_LED, LOW);
@@ -1016,7 +1016,7 @@ void updateoctave0() {
 }
 
 void updateoctave1() {
-  if (octave1 == 1) {
+  if (octave1) {
     showCurrentParameterPage("KBD Octave", "+1");
     srpanel.set(OCTAVE_0_LED, LOW);
     srpanel.set(OCTAVE_1_LED, HIGH);
@@ -1025,7 +1025,7 @@ void updateoctave1() {
 }
 
 void updatekbOff() {
-  if (kbOff == 1) {
+  if (kbOff) {
     showCurrentParameterPage("KBD Tracking", "Off");
     srpanel.set(KB_OFF_LED, HIGH);
     srpanel.set(KB_HALF_LED, LOW);
@@ -1036,7 +1036,7 @@ void updatekbOff() {
 }
 
 void updatekbHalf() {
-  if (kbHalf == 1) {
+  if (kbHalf) {
     showCurrentParameterPage("KBD Tracking", "Half");
     srpanel.set(KB_OFF_LED, LOW);
     srpanel.set(KB_HALF_LED, HIGH);
@@ -1047,7 +1047,7 @@ void updatekbHalf() {
 }
 
 void updatekbFull() {
-  if (kbFull == 1) {
+  if (kbFull) {
     showCurrentParameterPage("KBD Tracking", "Full");
     srpanel.set(KB_OFF_LED, LOW);
     srpanel.set(KB_HALF_LED, LOW);
@@ -1058,7 +1058,7 @@ void updatekbFull() {
 }
 
 void updateosc2_32() {
-  if (osc2_32 == 1) {
+  if (osc2_32) {
     showCurrentParameterPage("Osc2 Footage", "32 Foot");
     osc2foot = 0;
     srpanel.set(OSC2_32_LED, HIGH);
@@ -1068,7 +1068,7 @@ void updateosc2_32() {
 }
 
 void updateosc2_16() {
-  if (osc2_16 == 1) {
+  if (osc2_16) {
     showCurrentParameterPage("Osc2 Footage", "16 Foot");
     osc2foot = 2024;
     srpanel.set(OSC2_32_LED, LOW);
@@ -1078,7 +1078,7 @@ void updateosc2_16() {
 }
 
 void updateosc2_8() {
-  if (osc2_8 == 1) {
+  if (osc2_8) {
     showCurrentParameterPage("Osc2 Footage", "8 Foot");
     osc2foot = 4048;
     srpanel.set(OSC2_32_LED, LOW);
@@ -1088,7 +1088,7 @@ void updateosc2_8() {
 }
 
 void updateosc2_saw() {
-  if (osc2_saw == 1) {
+  if (osc2_saw) {
     showCurrentParameterPage("Osc2 Wave", "Sawtooth");
     srpanel.set(OSC2_SAW_LED, HIGH);
     srpanel.set(OSC2_TRI_LED, LOW);
@@ -1099,7 +1099,7 @@ void updateosc2_saw() {
 }
 
 void updateosc2_tri() {
-  if (osc2_tri == 1) {
+  if (osc2_tri) {
     showCurrentParameterPage("Osc2 Wave", "Triangle");
     srpanel.set(OSC2_SAW_LED, LOW);
     srpanel.set(OSC2_TRI_LED, HIGH);
@@ -1110,7 +1110,7 @@ void updateosc2_tri() {
 }
 
 void updateosc2_pulse() {
-  if (osc2_pulse == 1) {
+  if (osc2_pulse) {
     showCurrentParameterPage("Osc2 Wave", "On");
     srpanel.set(OSC2_SAW_LED, LOW);
     srpanel.set(OSC2_TRI_LED, LOW);
@@ -1121,7 +1121,7 @@ void updateosc2_pulse() {
 }
 
 void updatelfoOscOn() {
-  if (lfoOscOnswitch == 1) {
+  if (lfoOscOnswitch) {
     showCurrentParameterPage("LFO to Osc", "On");
     srpanel.set(LFO_OSC_OFF_LED, LOW);
     srpanel.set(LFO_OSC_ON_LED, HIGH);
@@ -1135,7 +1135,7 @@ void updatelfoOscOn() {
 }
 
 void updatelfoVCFOn() {
-  if (lfoVCFOnswitch == 1) {
+  if (lfoVCFOnswitch) {
     showCurrentParameterPage("LFO to VCF", "On");
     srpanel.set(LFO_VCF_OFF_LED, LOW);
     srpanel.set(LFO_VCF_ON_LED, HIGH);
@@ -1149,19 +1149,23 @@ void updatelfoVCFOn() {
 }
 
 void updatelevel1() {
-  if (level1 == 1)
+  if (level1) {
     level2 = 0;
-  {
+    seqEnabled = false;
+    arpEnabled = false;
+    button14switch = false;
+    button9switch = false;
+    seqToggleEnable();
     showCurrentParameterPage("Level 1", "Selected");
     srpanel.set(LEVEL1_LED, HIGH);
     srpanel.set(LEVEL2_LED, LOW);
-
+    
     showPatchNumberButton();
   }
 }
 
 void updatelevel2() {
-  if (level2 == 1) {
+  if (level2) {
     showCurrentParameterPage("Level 2", "Selected");
     srpanel.set(LEVEL1_LED, LOW);
     srpanel.set(LEVEL2_LED, HIGH);
@@ -1197,15 +1201,15 @@ void updatelevel2() {
 }
 
 void updateshvco() {
-  if (shvco == 1) {
+  if (shvco) {
     boardswitch.writePin(SH_TO_VCO, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON10_LED, HIGH);
     }
     button10switch = 1;
   } else {
     boardswitch.writePin(SH_TO_VCO, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON10_LED, LOW);
     }
     button10switch = 0;
@@ -1213,15 +1217,15 @@ void updateshvco() {
 }
 
 void updateshvcf() {
-  if (shvcf == 1) {
+  if (shvcf) {
     boardswitch.writePin(SH_TO_VCF, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON11_LED, HIGH);
     }
     button11switch = 1;
   } else {
     boardswitch.writePin(SH_TO_VCF, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON11_LED, LOW);
     }
     button11switch = 0;
@@ -1229,15 +1233,15 @@ void updateshvcf() {
 }
 
 void updatevcfVelocity() {
-  if (vcfVelocity == 1) {
+  if (vcfVelocity) {
     boardswitch.writePin(VCF_VELOCITY, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON3_LED, HIGH);
     }
     button3switch = 1;
   } else {
     boardswitch.writePin(VCF_VELOCITY, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON3_LED, LOW);
     }
     button3switch = 0;
@@ -1245,15 +1249,15 @@ void updatevcfVelocity() {
 }
 
 void updatevcaVelocity() {
-  if (vcaVelocity == 1) {
+  if (vcaVelocity) {
     boardswitch.writePin(VCA_VELOCITY, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON4_LED, HIGH);
     }
     button4switch = 1;
   } else {
     boardswitch.writePin(VCA_VELOCITY, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON4_LED, LOW);
     }
     button4switch = 0;
@@ -1261,15 +1265,15 @@ void updatevcaVelocity() {
 }
 
 void updatevcfLoop() {
-  if (vcfLoop == 1) {
+  if (vcfLoop) {
     boardswitch.writePin(VCF_LOOP, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON5_LED, HIGH);
     }
     button5switch = 1;
   } else {
     boardswitch.writePin(VCF_LOOP, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON5_LED, LOW);
     }
     button5switch = 0;
@@ -1277,15 +1281,15 @@ void updatevcfLoop() {
 }
 
 void updatevcaLoop() {
-  if (vcaLoop == 1) {
+  if (vcaLoop) {
     boardswitch.writePin(VCA_LOOP, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON6_LED, HIGH);
     }
     button6switch = 1;
   } else {
     boardswitch.writePin(VCA_LOOP, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON6_LED, LOW);
     }
     button6switch = 0;
@@ -1293,15 +1297,15 @@ void updatevcaLoop() {
 }
 
 void updatevcfLinear() {
-  if (vcfLinear == 1) {
+  if (vcfLinear) {
     boardswitch.writePin(VCF_LOG_LIN, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON7_LED, HIGH);
     }
     button7switch = 1;
   } else {
     boardswitch.writePin(VCF_LOG_LIN, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON7_LED, LOW);
     }
     button7switch = 0;
@@ -1309,15 +1313,15 @@ void updatevcfLinear() {
 }
 
 void updatevcaLinear() {
-  if (vcaLinear == 1) {
+  if (vcaLinear) {
     boardswitch.writePin(VCA_LOG_LIN, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON8_LED, HIGH);
     }
     button8switch = 1;
   } else {
     boardswitch.writePin(VCA_LOG_LIN, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON8_LED, LOW);
     }
     button8switch = 0;
@@ -1325,15 +1329,15 @@ void updatevcaLinear() {
 }
 
 void updateextclock() {
-  if (clocksource == 0) {
+  if (!clocksource) {
     boardswitch.writePin(CLOCK_SOURCE, LOW);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON12_LED, HIGH);
       srpanel.set(BUTTON13_LED, LOW);
     }
   } else {
     boardswitch.writePin(CLOCK_SOURCE, HIGH);
-    if (level2 == 1) {
+    if (level2) {
       srpanel.set(BUTTON13_LED, HIGH);
       srpanel.set(BUTTON12_LED, LOW);
     }
@@ -1367,7 +1371,7 @@ void updatebutton1() {
     srpanel.set(BUTTON1_LED, LOW);
     state = PARAMETER;
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 1;
     setPatchButton(patchNo);
   }
@@ -1434,18 +1438,18 @@ void updatebutton3() {
     turnOffOneandTwo();
     boardswitch.writePin(VCF_VELOCITY, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 3;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton4() {
-  if (level2 == 1 && arpEnabled && !arpPlaying ) {
+  if (level2 && arpEnabled && !arpPlaying ) {
     showCurrentParameterPage("Arpeggiator", "Continue");
     arpContinue();
   }
-  if (level2 == 1 && seqEnabled ) {
+  if (level2 && seqEnabled ) {
     showCurrentParameterPage("Sequencer", "Continue");
     seqContinue();
   }
@@ -1463,7 +1467,7 @@ void updatebutton4() {
     turnOffOneandTwo();
     boardswitch.writePin(VCA_VELOCITY, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 4;
     setPatchButton(patchNo);
   }
@@ -1488,7 +1492,7 @@ void updatebutton5() {
     turnOffOneandTwo();
     boardswitch.writePin(VCF_LOOP, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 5;
     setPatchButton(patchNo);
   }
@@ -1513,7 +1517,7 @@ void updatebutton6() {
     turnOffOneandTwo();
     boardswitch.writePin(VCA_LOOP, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 6;
     setPatchButton(patchNo);
   }
@@ -1540,40 +1544,40 @@ void updatebutton7() {
     turnOffOneandTwo();
     boardswitch.writePin(VCF_LOG_LIN, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 7;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton8() {
-  if (level2 == 1 && button8switch == 1) {
+  if (level2 && button8switch) {
     showCurrentParameterPage("VCA Lin EG", "On");
     vcaLinear = 1;
     srpanel.set(BUTTON8_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, HIGH);
   }
-  if (level2 == 1 && button8switch == 0) {
+  if (level2 && !button8switch) {
     showCurrentParameterPage("VCA Lin EG", "Off ");
     vcaLinear = 0;
     srpanel.set(BUTTON8_LED, LOW);
     turnOffOneandTwo();
     boardswitch.writePin(VCA_LOG_LIN, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 8;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton9() {
-  if (level2 == 1 && button9switch == 1) {
+  if (level2 && button9switch) {
     showCurrentParameterPage("Arpeggiator", "On");
     srpanel.set(BUTTON9_LED, HIGH);
     arpEnable();
   }
-  if (level2 == 1 && button9switch == 0) {
+  if (level2 && !button9switch) {
     showCurrentParameterPage("Arpeggiator", "Off ");
     srpanel.set(BUTTON9_LED, LOW);
     arpStop();
@@ -1581,52 +1585,52 @@ void updatebutton9() {
     arpRecording = false;
     arpPlaying   = false;
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 9;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton10() {
-  if (level2 == 1 && button10switch == 1) {
+  if (level2 && button10switch) {
     showCurrentParameterPage("Sample & Hold", "To VCO");
     srpanel.set(BUTTON10_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCO, HIGH);
   }
-  if (level2 == 1 && button10switch == 0) {
+  if (level2 && !button10switch) {
     showCurrentParameterPage("Sample & Hold", "Off ");
     srpanel.set(BUTTON10_LED, LOW);
     turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCO, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 10;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton11() {
-  if (level2 == 1 && button11switch == 1) {
+  if (level2 && button11switch) {
     showCurrentParameterPage("Sample & Hold", "To VCF ");
     srpanel.set(BUTTON11_LED, HIGH);
     turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCF, HIGH);
   }
-  if (level2 == 1 && button11switch == 0) {
+  if (level2 && !button11switch) {
     showCurrentParameterPage("Sample & Hold", "Off ");
     srpanel.set(BUTTON11_LED, LOW);
     turnOffOneandTwo();
     boardswitch.writePin(SH_TO_VCF, LOW);
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 11;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton12() {
-  if (level2 == 1 && button12switch == 1) {
+  if (level2 && button12switch) {
     showCurrentParameterPage("LFO Sync", "External");
     srpanel.set(BUTTON12_LED, HIGH);
     srpanel.set(BUTTON13_LED, LOW);
@@ -1636,14 +1640,14 @@ void updatebutton12() {
     turnOffOneandTwo();
     button12switch = 0;
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 12;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton13() {
-  if (level2 == 1 && button13switch == 1) {
+  if (level2 && button13switch) {
     showCurrentParameterPage("LFO Sync", "MIDI");
     srpanel.set(BUTTON13_LED, HIGH);
     srpanel.set(BUTTON12_LED, LOW);
@@ -1653,7 +1657,7 @@ void updatebutton13() {
     turnOffOneandTwo();
     button13switch = 0;
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 13;
     setPatchButton(patchNo);
   }
@@ -1673,29 +1677,29 @@ void updatebutton14() {
     seqEnabled = false;
     seqToggleEnable();
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 14;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton15() {
-  if (level2 == 1) {
+  if (level2) {
     showCurrentParameterPage("Level 2", "No Function");
     turnOffOneandTwo();
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 15;
     setPatchButton(patchNo);
   }
 }
 
 void updatebutton16() {
-  if (level2 == 1) {
+  if (level2) {
     showCurrentParameterPage("Level 2", "No Function");
     turnOffOneandTwo();
   }
-  if (level1 == 1) {
+  if (level1) {
     patchNo = 16;
     setPatchButton(patchNo);
   }
@@ -1971,6 +1975,10 @@ void myControlChange(byte channel, byte control, int value) {
       break;
 
     case CCmulti:
+      updatemulti();
+      break;
+
+    case CCsingle:
       updatemulti();
       break;
 
@@ -2564,6 +2572,8 @@ void myProgramChange(byte channel, byte program) {
 
 void recallPatch(int patchNo) {
   allNotesOff();
+  level1 = true;
+  updatelevel1();
 
   File patchFile = SD.open(String(patchNo).c_str());
   if (!patchFile) {
@@ -2579,7 +2589,7 @@ void recallPatch(int patchNo) {
 
   storeLastPatch(patchNo);
   showPatchNumberButton();
-  updatelevel2();
+  //updatelevel2();
 }
 
 void setCurrentPatchData(String data[], int fields) {
@@ -2656,6 +2666,8 @@ void setCurrentPatchData(String data[], int fields) {
   // Optional sequencer data (backward compatible)
   csvToSeq(seq1, data, idx, fields);
   csvToSeq(seq2, data, idx, fields);
+  seq1.index = 0;
+  seq2.index = 0;
 
   //Switches
   updateosc1_32();
@@ -2933,12 +2945,14 @@ void onButtonPress(uint16_t btnIndex, uint8_t btnType) {
   }
 
   if (btnIndex == SINGLE_TRIG && btnType == ROX_PRESSED) {
-    multiswitch = !multiswitch;
-    myControlChange(midiChannel, CCmulti, multiswitch);
+    singleswitch = true;
+    multiswitch = false;
+    myControlChange(midiChannel, CCsingle, singleswitch);
   }
 
   if (btnIndex == MULTIPLE_TRIG && btnType == ROX_PRESSED) {
-    multiswitch = !multiswitch;
+    multiswitch = true;
+    singleswitch = false;
     myControlChange(midiChannel, CCmulti, multiswitch);
   }
 
